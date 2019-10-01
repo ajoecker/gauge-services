@@ -28,7 +28,7 @@ To use the library in a project simply put the following in the `pom.xml`
 ```
 
 ## Examples
-The project [gauge-graphql-example](https://github.com/ajoecker/gauge-graphql-example) shows some examples of the usage.
+The project [gauge-service-examples](https://github.com/ajoecker/gauge-services-examples) shows some examples of the usage.
 
 ## New Testcases  
 To add new test cases one can either create a new spec file with the scenario(s) or add the new scenario to an   
