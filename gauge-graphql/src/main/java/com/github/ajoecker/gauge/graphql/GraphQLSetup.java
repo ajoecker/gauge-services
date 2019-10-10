@@ -11,8 +11,8 @@ public class GraphQLSetup {
     public void before() {
         Registry.init(new Connector() {
             @Override
-            protected Object bodyFor(String query) {
-                return Map.of("query", query);
+            protected Object bodyFor(String query, String variables) {
+                return Map.of("query", query, "variables", variables);
             }
 
             @Override

@@ -153,11 +153,4 @@ public final class ServiceUtil {
     static Map<String, String> fromTable(TableRow tableRow) {
         return tableRow.getTableCells().stream().collect(Collectors.toMap(TableCell::getColumnName, TableCell::getValue));
     }
-
-    public static void main(String[] args) {
-        String s = "%hallo%";
-        String t = "somet";
-        System.out.println(ServiceUtil.configurationSource.unmask(s));
-        System.out.println(ServiceUtil.configurationSource.unmask(t));
-    }
 }

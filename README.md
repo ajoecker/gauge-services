@@ -17,13 +17,27 @@ To execute a specific test case you can
 * call `mvn clean install -DspecsDir="specs/<spec_to_execute>` to run a complete spec with all test cases  
 * call `mvn clean install -DspecsDir="specs/<spec_to_execute> -Dscenario=<name_of_scenario>` to run a single scenario of a spec  
   
-## Usage  
+## Usage 
+The library can be used for two different api testings
+
+### Graphql 
 To use the library in a project simply put the following in the `pom.xml`  
 ```  
 <dependency>  
  <groupId>com.github.ajoecker</groupId>
  <artifactId>gauge-graphql</artifactId>
- <version>0.2</version>
+ <version>0.3-SNAPSHOT</version>
+ <scope>test</scope>
+</dependency>  
+```
+
+### REST 
+To use the library in a project simply put the following in the `pom.xml`  
+```  
+<dependency>  
+ <groupId>com.github.ajoecker</groupId>
+ <artifactId>gauge-rest</artifactId>
+ <version>0.3-SNAPSHOT</version>
  <scope>test</scope>
 </dependency>  
 ```
@@ -66,7 +80,7 @@ See the [Configuration](#Configuration) section for details and how to set up au
 #### POST
 To send a query/mutation one must create a file inside the gauge project and use this file in the sending step  
   
-`When sending <file:the_file_to_send_with_full_path>`  
+`When posting <file:the_file_to_send_with_full_path>`  
   
 whereas `the_file_to_send_with_full_path` is the full path of the query file.  
   
@@ -117,7 +131,7 @@ verification can start with `And` instead of `Then` for better reading purpose.
 It is possible to use dynamic queries, when using variables in the query file.
 ##### Example
 ```
-popular_artists(size: $size) {
+popular_artists(size: %size%) {
     artists {
         name
         nationality
@@ -128,9 +142,9 @@ When using variables, the `When` step in the spec file must replace this variabl
 
 Like
  
- `* When sending <file:queries/popular_artists_variable.graphql> with "size:4"`
+ `* When posting <file:queries/popular_artists_variable.graphql> with "size:4"`
  
-It is possible to configure the string that masks the variable in the query file (default: `$`), via the configuration
+It is possible to configure the string that masks the variable in the query file (default: `%`), via the configuration
 `gauge.service.variable.mask`.
 
 It is also possible to configure the separator that divides the variable name with the variable value in the step (default `:`), 
@@ -138,7 +152,7 @@ via the configuration `gauge.service.variable.separator`.
 
 It is also possible to facilitate gauge table for dynamic replacement
 ```
-* When sending <file:queries/popular_artists_variable.graphql> with 
+* When posting <file:queries/popular_artists_variable.graphql> with 
 
    |name|value|
    |----|-----|
@@ -149,30 +163,56 @@ whereas the column headers must be named `name` and `value`.
 It is also possible to use the result of a previous request as substitute for a variable
 ```
 ## stations around Frankfurt with table
-* When sending <file:queries/dbahn_frankfurt.graphql>
-* And sending <file:queries/dbahn_frankfurt_nearby.graphql> with 
+* When posting <file:queries/dbahn_frankfurt.graphql>
+* And posting <file:queries/dbahn_frankfurt_nearby.graphql> with 
 
-   |name     |value                                |
-   |---------|-------------------------------------|
-   |latitude |$stationWithEvaId.location.latitude  | 
-   |longitude|$stationWithEvaId.location.longitude |
-   |radius   |2000                                 |
+   |name     |value                                 |
+   |---------|--------------------------------------|
+   |latitude |%stationWithEvaId.location.latitude%  | 
+   |longitude|%stationWithEvaId.location.longitude% |
+   |radius   |2000                                  |
 ```
 the first two values are masked to identify them as variables and contain the full path to a single value (list values are currently not supported).
 
-The values are used in the second request to replace any variables in the query named `latitude` and `longitude`.
+The values are used in the second request to replace any variables in the query named `latitude` and `longitude`
+
+Furthermore one can use variable files for graphql queries, when e.g. complex variables are required.
+
+E.g. given the following graphql query:
+```
+mutation createUser($user: CreateUserInput!) {
+    createUser(user: $user) {
+        id
+        success
+    }
+}
+```
+one can give the fitting variables either as json string in the step or as external file:
+```
+* When posting <file:query/createUser.graphql> with "{ 'customer': { 'email': 'some-customer-email@email.com', 'password' : 'RCBb8kjzzX^S' } }"
+* When posting <file:query/createUser.graphql> with <file:query/createUserInput.json>" 
+```
+for the latter the input would look like this:
+```
+{
+  "customer": {
+    "email": "some-customer-email3333@email.com",
+    "password" : "RCBb8kjzzX^S"
+  }
+}
+```
 ## Configuration
 In the Gauge environment the following keys are recognized
  
 ### gauge.service.endpoint
 *Mandatory*
 
-The url to the graphql api. Only mandatory if the endpoint is not given in the spec file directly.
+The endpoint of the api. Only mandatory if the endpoint is not given in the spec file directly.
  
 ### gauge.service.debug
 *Optional*
 
-Will add some request debug information on the console (uses restassured `.log().all()` for this)
+Will add request and response debug information on the console.
  
 ### gauge.service.token
 *Optional*
@@ -182,12 +222,11 @@ In case there is a common token for login instead of a dynamic one (see `gauge.s
 ### gauge.service.token.query
 *Optional*
 
-Name of the file, containing the query for the login. This file must be located in the `queries` folder and 
-the username/email and password must be masked with configuration: `gauge.service.variable.mask`.
+Path to the file, that contains the query for the login. Username/Email and password must be masked with configuration: `gauge.service.variable.mask`.
 #### Example
 ```
 mutation {  
-    login(email: "$user", password: "$password") {  
+    login(email: "%user%", password: "%password%") {  
         token  
     }  
 }
@@ -212,7 +251,7 @@ Defines the separator in the verifying step to define multiple elements that nee
 Defines the string that masks a variable in the graphql file
 #### Example
 ```
-popular_artists(size: $size) {
+popular_artists(size: %size%) {
     artists {
         name
         nationality
