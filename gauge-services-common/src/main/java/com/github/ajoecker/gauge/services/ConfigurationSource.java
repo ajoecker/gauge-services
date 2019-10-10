@@ -9,13 +9,13 @@ public interface ConfigurationSource {
     /**
      * Returns the string that masks a variable in the query file.
      * <p>
-     * Default string is <code>$</code> and is read in a Gauge project via the environment variable
+     * Default string is <code>%</code> and is read in a Gauge project via the environment variable
      * <code>gauge.service.variable.mask</code>. If this variable is not existing or empty, the default value is taken.
      * <p>
      * For example
      * <pre>
      *     {
-     *     popular_artists(size: $size) {
+     *     popular_artists(size: %size%) {
      *         artists {
      *             name
      *             nationality
@@ -24,10 +24,10 @@ public interface ConfigurationSource {
      * }
      * </pre>
      *
-     * @return the mask or <code>$</code> if non is defined
+     * @return the mask or <code>%</code> if non is defined
      */
     default String variableMask() {
-        return orDefault("gauge.service.variable.mask", "$");
+        return orDefault("gauge.service.variable.mask", "%");
     }
 
     /**
@@ -60,7 +60,7 @@ public interface ConfigurationSource {
      *
      * @return the separator between variables
      */
-    default String variableseparator() {
+    default String variableSeparator() {
         return orDefault("gauge.service.variable.separator", ":");
     }
 
@@ -72,7 +72,7 @@ public interface ConfigurationSource {
      * @return the masked string
      */
     default String mask(String s) {
-        return variableMask() + s;
+        return variableMask() + s + variableMask();
     }
 
     /**
@@ -82,7 +82,7 @@ public interface ConfigurationSource {
      * @return unmasekd string
      */
     default String unmask(String s) {
-        return isMasked(s) ? s.substring(variableMask().length()) : s;
+        return isMasked(s) ? s.substring(variableMask().length(), s.length() - variableMask().length()) : s;
     }
 
     /**
@@ -92,6 +92,6 @@ public interface ConfigurationSource {
      * @return whether the string is a variable
      */
     default boolean isMasked(String replacement) {
-        return replacement.startsWith(variableMask());
+        return replacement.startsWith(variableMask()) && replacement.endsWith(variableMask());
     }
 }

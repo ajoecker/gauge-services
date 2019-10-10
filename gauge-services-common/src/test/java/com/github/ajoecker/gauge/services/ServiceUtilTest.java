@@ -113,12 +113,7 @@ public class ServiceUtilTest {
         ExtractableResponse<Response> re = Mockito.mock(ExtractableResponse.class);
         Mockito.when(re.path("foo")).thenReturn(2);
 
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:$foo", Optional.of(re), new Connector() {
-            @Override
-            public Response post(String query, RequestSpecification request) {
-                return null;
-            }
-        }), queryReplaced);
+        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:$foo", Optional.of(re), new Connector()), queryReplaced);
     }
 
     @BeforeEach

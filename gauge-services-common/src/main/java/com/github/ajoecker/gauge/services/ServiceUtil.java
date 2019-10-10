@@ -59,7 +59,7 @@ public final class ServiceUtil {
     public static String replaceVariablesInQuery(String query, String variables, Optional<ExtractableResponse<Response>> response, Connector connector) {
         String[] split = split(variables);
         for (String s : split) {
-            String[] keyValue = s.split(configurationSource.variableseparator());
+            String[] keyValue = s.split(configurationSource.variableSeparator());
             String replacement = extractReplacement(response, keyValue[1], connector);
             query = doReplace(query, keyValue[0], replacement);
         }
@@ -152,5 +152,12 @@ public final class ServiceUtil {
      */
     static Map<String, String> fromTable(TableRow tableRow) {
         return tableRow.getTableCells().stream().collect(Collectors.toMap(TableCell::getColumnName, TableCell::getValue));
+    }
+
+    public static void main(String[] args) {
+        String s = "%hallo%";
+        String t = "somet";
+        System.out.println(ServiceUtil.configurationSource.unmask(s));
+        System.out.println(ServiceUtil.configurationSource.unmask(t));
     }
 }

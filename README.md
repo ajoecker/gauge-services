@@ -2,8 +2,9 @@
 ## Idea  
 To have a simple and easy-usable project for testing services such as graphql or REST.  
 
+<!--
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.ajoecker/gauge-graphql/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.ajoecker/gauge-graphql) [![Build Status](https://travis-ci.org/ajoecker/gauge-graphql.svg?branch=master)](https://travis-ci.org/ajoecker/gauge-graphql)
-
+-->
 ## Implementation  
 The implementation uses [http://gauge.org](http://gauge.org) as describer and runner of the automated tests and [http://rest-assured.io/](http://rest-assured.io/) as helper library.  
   
@@ -52,11 +53,15 @@ If a login is required to execute subsequent queries, the first step of a scenar
   
 `Given "<email>" logs in with password "<password>"`  
   
-whereas `<email>` must be an existing customer email and `<password>` must be the matching password of the customer.  See also [Configuration](#Configuration)
+whereas `<email>` must be an existing customer email and `<password>` must be the matching password of the customer.
 
 If the login is working on a common token and not a dynamic created one, the first step can also be
 
 `Given user logs in`
+
+Also the library suppors simple basic authentication.
+
+See the [Configuration](#Configuration) section for details and how to set up authentication.
   
 #### POST
 To send a query/mutation one must create a file inside the gauge project and use this file in the sending step  
