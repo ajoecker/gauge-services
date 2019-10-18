@@ -7,6 +7,7 @@ import com.thoughtworks.gauge.Table;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,6 +44,11 @@ public class GaugeService {
         previousResponse = Optional.of(response.then().extract());
     }
 
+    @Step({"Then status code is <code>", "And status code is <code>"})
+    public void verifyStatusCode(int expected) {
+        response.then().statusCode(is(expected));
+    }
+
     @Step({"When posting <query> with <variables>", "And posting <query> with <variables>"})
     public void postingWithVariables(String query, Object variables) {
         if (variables instanceof String) {
@@ -69,18 +75,19 @@ public class GaugeService {
         loginHandler.loginWithNoGivenCredentials(connector);
     }
 
-    @Step({"Then <path> must contain <value>", "And <path> must contain <value>"})
+    @Step({"Then <path> contains <value>", "And <path> contains <value>"})
     public void thenMustContains(String dataPath, Object value) {
         compare(value, items -> {
             if (response.then().extract().path(connector.prefix(dataPath)) instanceof List) {
                 assertResponse(dataPath, hasItems(items));
             } else {
-                assertResponse(dataPath, hasItem(items[0]));
+                assertResponse(dataPath, Matchers.containsString((String) items[0]));
             }
         });
     }
 
-    @Step({"Then <path> must be <value>", "And <path> must be <value>"})
+    @Step({"Then <path> is <value>", "And <path> is <value>",
+            "Then <path> are <value>", "And <path> are <value>"})
     public void thenMustBe(String dataPath, Object value) {
         compare(value, items -> {
             if (response.then().extract().path(connector.prefix(dataPath)) instanceof List) {
@@ -92,8 +99,8 @@ public class GaugeService {
     }
 
     @Step("Use <endpoint>")
-    public void useEndpoint(String enpoint) {
-        connector.setEndpoint(enpoint);
+    public void useEndpoint(String endpoint) {
+        connector.setEndpoint(endpoint);
     }
 
     private void compare(Object value, Consumer<Object[]> match) {
@@ -116,7 +123,7 @@ public class GaugeService {
         }
     }
 
-    @Step({"Then <dataPath> must be empty", "And <dataPath> must be empty"})
+    @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})
     public void thenEmpty(String dataPath) {
         assertResponse(connector.prefix(dataPath), empty());
     }

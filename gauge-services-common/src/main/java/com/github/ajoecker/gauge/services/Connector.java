@@ -155,7 +155,6 @@ public class Connector {
         if (Boolean.valueOf(System.getenv("gauge.service.debug"))) {
             response.then().log().all();
         }
-        response.then().statusCode(Matchers.is(200));
         return response;
     }
 

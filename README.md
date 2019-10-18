@@ -25,7 +25,7 @@ To use the library in a project simply put the following in the `pom.xml`
 <dependency>  
  <groupId>com.github.ajoecker</groupId>
  <artifactId>gauge-graphql</artifactId>
- <version>0.3</version>
+ <version>0.3.1-SNAPSHOT</version>
  <scope>test</scope>
 </dependency>  
 ```
@@ -36,7 +36,7 @@ To use the library in a project simply put the following in the `pom.xml`
 <dependency>  
  <groupId>com.github.ajoecker</groupId>
  <artifactId>gauge-rest</artifactId>
- <version>0.3</version>
+ <version>0.3.1-SNAPSHOT</version>
  <scope>test</scope>
 </dependency>  
 ```
@@ -82,21 +82,26 @@ To send a query/mutation one must create a file inside the gauge project and use
 `When posting <file:the_file_to_send_with_full_path>`  
   
 whereas `the_file_to_send_with_full_path` is the full path of the query file.  
+
+#### GET
+To get a resource one can simply query  
+  
+`When getting "1234"`   
   
 #### Verifying the result  
 To verify a response multiple building blocks exist. All of them can either start with `Then` or when chaining multiple verifications with `And`.  
   
 Also all verification steps have the json path of the attribute to verify as first parameter (see examples below)  
   
-##### Must Be  
+##### Is  
 Verifies that the returned value is a certain value, whereas value can either be a single value or a table.  
   
 ###### Examples  
-`* Then "vehicle.price" must be "720"` 
+`* Then "vehicle.price" is "720"` 
 
-`* Then "cities.name" must be "New York, London"`  
+`* Then "cities.name" is "New York, London"`  
 ```  
-* Then "brands" must be`   
+* Then "brands" are   
  |id |name            | 
  |---|----------------|
  |10 |OREO            | 
@@ -104,27 +109,27 @@ Verifies that the returned value is a certain value, whereas value can either be
 ```  
 If the given response path returns a list with multiple attributes, one can also state a map like pattern
 
-`* Then "popular_artists.artists" must be "{name: Pablo Picasso, nationality: Spanish}, {name: Banksy, nationality: British}"`
+`* Then "popular_artists.artists" are "{name: Pablo Picasso, nationality: Spanish}, {name: Banksy, nationality: British}"`
 
-##### Must contain
+##### Contains
 Verifies that the returned value contains a certain value.
 
-This follows the same blocks as in [Must Be](#must-be)
+This follows the same blocks as above.
 
-##### Must Be Empty  
+##### Is Empty  
 Verifies that the returned value is empty  
 
 ###### Examples  
-`* Then "cities.city" must be empty`  
+`* Then "cities.city" is empty`  
   
 #### Chaining result verifications  
 When multiple values shall be verified, each verification is one step in the scenario. The second and later  
 verification can start with `And` instead of `Then` for better reading purpose. 
  
 ##### Example  
-`* Then "vehicle.price" must be "720"`  
-`* And "breakfast.brand.name" must be "Nutella"`    
-`* And "breakfast.brand.calories" must be "Oh Hell NOOOO"`  
+`* Then "vehicle.price" is "720"`  
+`* And "breakfast.brand.name" is "Nutella"`    
+`* And "breakfast.brand.calories" is "Oh Hell NOOOO"`  
 
 #### Dynamic queries
 It is possible to use dynamic queries, when using variables in the query file.
@@ -271,4 +276,4 @@ Defines the type of login that is used, if required. Values can be `token` (logi
 (login via basic authentication)
 
 ## Note  
-Gauge does not support currently multiline parameters, which means a query cannot be part of the step, but must  be referenced by an external file. Watch https://github.com/getgauge/gauge/issues/175 for this.
+Gauge does not support currently multi-line parameters, which means a query cannot be part of the step, but must  be referenced by an external file. Watch https://github.com/getgauge/gauge/issues/175 for this.
