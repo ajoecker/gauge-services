@@ -8,7 +8,7 @@ import static com.github.ajoecker.gauge.services.ServiceUtil.orDefault;
 
 public final class Registry {
     public enum LoginType {
-        token, basic
+        TOKEN, BASIC
     }
 
     private static LoginHandler loginHandler;
@@ -20,7 +20,7 @@ public final class Registry {
 
     public static void init(Connector connector) {
         Registry.connector = connector;
-        setLoginHandler(orDefault("gauge.service.loginhandler", Registry.LoginType.token.toString()));
+        setLoginHandler(orDefault("gauge.service.loginhandler", Registry.LoginType.TOKEN.toString()));
     }
 
     static Connector getConnector() {
@@ -32,12 +32,12 @@ public final class Registry {
     }
 
     private static void setLoginHandler(String type) {
-        switch (LoginType.valueOf(type)) {
-            case basic:
+        switch (LoginType.valueOf(type.toUpperCase())) {
+            case BASIC:
                 loginHandler = new BasicAuthentication();
                 return;
 
-            case token:
+            case TOKEN:
                 loginHandler = new TokenBasedLogin();
                 return;
 
