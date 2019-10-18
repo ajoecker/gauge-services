@@ -14,7 +14,9 @@
     <packaging>pom</packaging>
 
     <name>Library to automate service tests with Gauge</name>
-    <description>The library provides several step templates for Gauge scenarios to execute queries and verifier their responses.</description>
+    <description>The library provides several step templates for Gauge scenarios to execute queries and verifier their
+        responses.
+    </description>
     <url>https://github.com/ajoecker/gauge-service</url>
 
     <licenses>
