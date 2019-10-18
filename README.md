@@ -2,7 +2,7 @@
 ## Idea  
 To have a simple and easy-usable project for testing services such as graphql or REST.  
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.ajoecker/gauge-services/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.ajoecker/gauge-services) [![Build Status](https://travis-ci.com/ajoecker/gauge-services.svg?branch=master)](https://travis-ci.com/ajoecker/gauge-services)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.ajoecker/gauge-services/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.ajoecker/gauge-services) [![Build Status](https://travis-ci.org/ajoecker/gauge-services.svg?branch=master)](https://travis-ci.org/ajoecker/gauge-services)
 
 ## Implementation  
 The implementation uses [http://gauge.org](http://gauge.org) as describer and runner of the automated tests and [http://rest-assured.io/](http://rest-assured.io/) as helper library.  
