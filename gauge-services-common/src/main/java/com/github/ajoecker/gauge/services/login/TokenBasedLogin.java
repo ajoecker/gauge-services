@@ -10,7 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import static com.github.ajoecker.gauge.services.ServiceUtil.replaceVariablesInQuery;
 import static com.github.ajoecker.gauge.services.ServiceUtil.separator;
@@ -36,7 +36,7 @@ public final class TokenBasedLogin implements LoginHandler {
 
     @Override
     public void loginWithNoGivenCredentials(Connector connector) {
-        loginToken = Optional.ofNullable(System.getenv("gauge.service.token")).orElse(sendLoginQuery(connector, Function.identity()));
+        loginToken = Optional.ofNullable(System.getenv("gauge.service.token")).orElse(sendLoginQuery(connector, UnaryOperator.identity()));
     }
 
     @Override
@@ -44,18 +44,24 @@ public final class TokenBasedLogin implements LoginHandler {
         loginToken = sendLoginQuery(connector, s -> replaceVariablesInQuery(s, "user:" + user + separator() + "password:" + password, Optional.empty(), connector));
     }
 
-    private String sendLoginQuery(Connector connector, Function<String, String> queryMapper) {
+    private String sendLoginQuery(Connector connector, UnaryOperator<String> queryMapper) {
         try {
             Response sending = connector.post(readQuery(queryMapper));
             return sending.then().extract().path(System.getenv("gauge.service.token.path"));
         } catch (URISyntaxException | IOException e) {
-            throw new RuntimeException(e);
+            throw new QueryException(e);
         }
     }
 
-    private static String readQuery(Function<String, String> mapper) throws IOException, URISyntaxException {
+    private static String readQuery(UnaryOperator<String> mapper) throws IOException, URISyntaxException {
         String queryFile = "/" + System.getenv("gauge.service.token.query");
         URI uri = TokenBasedLogin.class.getResource(queryFile).toURI();
         return mapper.apply(readString(Paths.get(uri)));
+    }
+
+    public static class QueryException extends RuntimeException {
+        public QueryException(Throwable throwable) {
+            super(throwable);
+        }
     }
 }

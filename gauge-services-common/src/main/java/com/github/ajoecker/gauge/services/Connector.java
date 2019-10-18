@@ -4,7 +4,6 @@ import com.github.ajoecker.gauge.services.login.LoginHandler;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import org.hamcrest.Matchers;
 
 import static io.restassured.RestAssured.given;
 
@@ -152,7 +151,7 @@ public class Connector {
     }
 
     private Response checkDebugPrint(Response response) {
-        if (Boolean.valueOf(System.getenv("gauge.service.debug"))) {
+        if (Boolean.parseBoolean(System.getenv("gauge.service.debug"))) {
             response.then().log().all();
         }
         return response;
@@ -186,7 +185,7 @@ public class Connector {
 
     private RequestSpecification startRequest() {
         RequestSpecification request = given();
-        if (Boolean.valueOf(System.getenv("gauge.service.debug"))) {
+        if (Boolean.parseBoolean(System.getenv("gauge.service.debug"))) {
             request.when().log().all();
         }
         return request;
