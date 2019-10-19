@@ -2,7 +2,6 @@ package com.github.ajoecker.gauge.services;
 
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +46,7 @@ public class ServiceUtilTest {
     @Test
     public void replaceVariablesInQueryWorks() {
         String query = "{\n" +
-                "    popular_artists(size: $size) {\n" +
+                "    popular_artists(size: %size%) {\n" +
                 "        artists {\n" +
                 "            name\n" +
                 "            nationality\n" +
@@ -68,7 +67,7 @@ public class ServiceUtilTest {
     @Test
     public void replaceVariablesInQueryWithOwnFormat() {
         String query = "{\n" +
-                "    popular_artists(size: ##size) {\n" +
+                "    popular_artists(size: ##size##) {\n" +
                 "        artists {\n" +
                 "            name\n" +
                 "            nationality\n" +
@@ -95,7 +94,7 @@ public class ServiceUtilTest {
     @Test
     public void replaceVariablesInQueryWithVariablesWorks() {
         String query = "{\n" +
-                "    popular_artists(size: $size) {\n" +
+                "    popular_artists(size: %size%) {\n" +
                 "        artists {\n" +
                 "            name\n" +
                 "            nationality\n" +
@@ -113,7 +112,7 @@ public class ServiceUtilTest {
         ExtractableResponse<Response> re = Mockito.mock(ExtractableResponse.class);
         Mockito.when(re.path("foo")).thenReturn(2);
 
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:$foo", Optional.of(re), new Connector()), queryReplaced);
+        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:%foo%", Optional.of(re), new Connector()), queryReplaced);
     }
 
     @BeforeEach
