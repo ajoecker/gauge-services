@@ -20,7 +20,7 @@ public final class Registry {
 
     public static void init(Connector connector) {
         Registry.connector = connector;
-        setLoginHandler(orDefault("gauge.service.loginhandler", Registry.LoginType.TOKEN.toString()));
+        setLoginHandler(orDefault("gauge.service.loginhandler", LoginType.BASIC.toString()));
     }
 
     static Connector getConnector() {
@@ -34,11 +34,11 @@ public final class Registry {
     private static void setLoginHandler(String type) {
         switch (LoginType.valueOf(type.toUpperCase())) {
             case BASIC:
-                loginHandler = new BasicAuthentication();
+                loginHandler = new BasicAuthentication(new VariableAccessor());
                 return;
 
             case TOKEN:
-                loginHandler = new TokenBasedLogin();
+                loginHandler = new TokenBasedLogin(new VariableAccessor());
                 return;
 
             default:

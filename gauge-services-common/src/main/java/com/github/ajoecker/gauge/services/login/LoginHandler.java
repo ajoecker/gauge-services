@@ -24,9 +24,9 @@ public interface LoginHandler {
     void loginWithGivenCredentials(String user, String password, Connector connector);
 
     /**
-     * Logs in with no given credentials, when no ones are required
+     * Logs in with credentials read from the gauge environment instead of given directly as in {@link #loginWithGivenCredentials(String, String, Connector)}
      *
      * @param connector the connector to send a possible login query
      */
-    void loginWithNoGivenCredentials(Connector connector);
+    void loginWithSystemCredentials(Connector connector);
 }

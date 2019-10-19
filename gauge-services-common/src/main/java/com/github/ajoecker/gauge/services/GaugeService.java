@@ -72,7 +72,7 @@ public class GaugeService {
 
     @Step("Given user logs in")
     public void loginWIthNoCredentials() {
-        loginHandler.loginWithNoGivenCredentials(connector);
+        loginHandler.loginWithSystemCredentials(connector);
     }
 
     @Step({"Then <path> contains <value>", "And <path> contains <value>"})
