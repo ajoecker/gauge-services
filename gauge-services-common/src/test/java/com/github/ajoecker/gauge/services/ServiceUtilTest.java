@@ -9,7 +9,6 @@ import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.github.ajoecker.gauge.services.ServiceUtil.isMap;
 
@@ -61,7 +60,7 @@ public class ServiceUtilTest {
                 "        }\n" +
                 "    }\n" +
                 "}";
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:2", Optional.empty(), null), queryReplaced);
+        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:2", new Connector()), queryReplaced);
     }
 
     @Test
@@ -88,7 +87,7 @@ public class ServiceUtilTest {
                 return "##";
             }
         };
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:2", Optional.empty(), null), queryReplaced);
+        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:2", new Connector()), queryReplaced);
     }
 
     @Test
@@ -112,7 +111,9 @@ public class ServiceUtilTest {
         ExtractableResponse<Response> re = Mockito.mock(ExtractableResponse.class);
         Mockito.when(re.path("foo")).thenReturn(2);
 
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:%foo%", Optional.of(re), new Connector()), queryReplaced);
+        Connector connector = new Connector();
+        connector.setPreviousResponse(re);
+        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:%foo%", connector), queryReplaced);
     }
 
     @BeforeEach

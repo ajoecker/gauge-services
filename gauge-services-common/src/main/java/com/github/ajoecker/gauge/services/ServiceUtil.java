@@ -4,12 +4,9 @@ import com.google.common.base.Strings;
 import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
 import com.thoughtworks.gauge.TableRow;
-import io.restassured.response.ExtractableResponse;
-import io.restassured.response.Response;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
@@ -52,30 +49,29 @@ public final class ServiceUtil {
      *
      * @param query     the query containing variables
      * @param variables the values of the variables
-     * @param response  an optional response from previous request for retrieving paths for current request to substitute variables
      * @param connector the {@link Connector} used in the request
      * @return the actual query
      */
-    public static String replaceVariablesInQuery(String query, String variables, Optional<ExtractableResponse<Response>> response, Connector connector) {
+    public static String replaceVariablesInQuery(String query, String variables, Connector connector) {
         String[] split = split(variables);
         for (String s : split) {
             String[] keyValue = s.split(configurationSource.variableSeparator());
-            String replacement = extractReplacement(response, keyValue[1], connector);
+            String replacement = extractReplacement(keyValue[1], connector);
             query = doReplace(query, keyValue[0], replacement);
         }
         return query;
     }
 
-    private static String extractReplacement(Optional<ExtractableResponse<Response>> response, String replacement, Connector connector) {
-        if (response.isPresent() && configurationSource.isMasked(replacement)) {
-            return extractPathFromPreviousRequest(response.get(), replacement, connector);
+    private static String extractReplacement(String replacement, Connector connector) {
+        if (connector.hasPreviousResponse() && configurationSource.isMasked(replacement)) {
+            return extractPathFromPreviousRequest(replacement, connector);
         }
         return replacement;
     }
 
-    private static String extractPathFromPreviousRequest(ExtractableResponse<Response> response, String replacement, Connector connector) {
+    private static String extractPathFromPreviousRequest(String replacement, Connector connector) {
         String variablePath = configurationSource.unmask(replacement);
-        Object path = response.path(connector.prefix(variablePath));
+        Object path = connector.pathFromPreviousResponse(variablePath);
         if (path instanceof List) {
             throw new IllegalArgumentException("variable path " + variablePath + " is not a single value, but a list: " + path);
         }
@@ -91,14 +87,13 @@ public final class ServiceUtil {
      *
      * @param query     the query containing variables
      * @param variables the values of the variables as a gauge table
-     * @param response  an optional response from previous request for retrieving paths for current request to substitute variables
      * @param connector the {@link Connector} used in the request
      * @return the actual query
      */
-    public static String replaceVariablesInQuery(String query, Table variables, Optional<ExtractableResponse<Response>> response, Connector connector) {
+    public static String replaceVariablesInQuery(String query, Table variables, Connector connector) {
         List<TableRow> tableRows = variables.getTableRows();
         for (TableRow row : tableRows) {
-            query = doReplace(query, row.getCell("name"), extractReplacement(response, row.getCell("value"), connector));
+            query = doReplace(query, row.getCell("name"), extractReplacement(row.getCell("value"), connector));
         }
         return query;
     }

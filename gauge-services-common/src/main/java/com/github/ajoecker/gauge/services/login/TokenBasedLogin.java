@@ -48,13 +48,13 @@ public final class TokenBasedLogin implements LoginHandler {
 
     @Override
     public void loginWithGivenCredentials(String user, String password, Connector connector) {
-        loginToken = sendLoginQuery(connector, s -> replaceVariablesInQuery(s, "user:" + user + separator() + "password:" + password, Optional.empty(), connector));
+        loginToken = sendLoginQuery(connector, s -> replaceVariablesInQuery(s, "user:" + user + separator() + "password:" + password, connector));
     }
 
     private String sendLoginQuery(Connector connector, UnaryOperator<String> queryMapper) {
         try {
-            Response sending = connector.post(readQuery(queryMapper));
-            return sending.then().extract().path(variableAccessor.tokenPath());
+            connector.post(readQuery(queryMapper));
+            return connector.extract(variableAccessor.tokenPath());
         } catch (URISyntaxException | IOException e) {
             throw new QueryException(e);
         }

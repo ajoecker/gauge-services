@@ -1,17 +1,32 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.services.login.LoginHandler;
+import com.thoughtworks.gauge.Table;
 import io.restassured.http.ContentType;
+import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import static com.github.ajoecker.gauge.services.ServiceUtil.*;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Abstraction of a connection to a service. This is the glue to connect and send to a service, e.g. GraphQL or REST
  */
 public class Connector {
     private String endpoint;
+    private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
+    private Response response;
 
     public Connector() {
         setEndpoint(System.getenv("gauge.service.endpoint"));
@@ -42,10 +57,13 @@ public class Connector {
      * Sends a post with the given query
      *
      * @param query the query
-     * @return the {@link Response}
      */
-    public final Response post(String query) {
-        return post(query, "");
+    public final void post(String query) {
+        post(query, "");
+    }
+
+    public String extract(String path)  {
+        return response.then().extract().path(prefix(path));
     }
 
     /**
@@ -53,20 +71,20 @@ public class Connector {
      *
      * @param query     the query
      * @param variables the variables
-     * @return the {@link Response}
      */
-    public final Response post(String query, String variables) {
-        return post(query, variables, startRequest());
+    public final void post(String query, String variables) {
+        response = post(query, variables, startRequest());
+        setPreviousResponse();
     }
 
     /**
      * Sends a get with the given query
      *
      * @param query the query
-     * @return the {@link Response}
      */
-    public final Response get(String query) {
-        return get(query, startRequest());
+    public final void get(String query) {
+        response = get(query, startRequest());
+        setPreviousResponse();
     }
 
     /**
@@ -74,10 +92,10 @@ public class Connector {
      *
      * @param query        the query
      * @param loginHandler the {@link LoginHandler} for authentication
-     * @return the {@link Response}
      */
-    public final Response postWithLogin(String query, LoginHandler loginHandler) {
-        return post(query, "", login(loginHandler));
+    public final void postWithLogin(String query, LoginHandler loginHandler) {
+        response = post(query, "", login(loginHandler));
+        setPreviousResponse();
     }
 
     /**
@@ -86,10 +104,18 @@ public class Connector {
      * @param query        the query
      * @param variables    the variables
      * @param loginHandler the {@link LoginHandler} for authentication
-     * @return the {@link Response}
      */
-    public final Response postWithLogin(String query, String variables, LoginHandler loginHandler) {
-        return post(query, variables, login(loginHandler));
+    public final void postWithLogin(String query, String variables, LoginHandler loginHandler) {
+        response = post(query, variables, login(loginHandler));
+        setPreviousResponse();
+    }
+
+    private void setPreviousResponse() {
+        setPreviousResponse(response.then().extract());
+    }
+
+    void setPreviousResponse(ExtractableResponse<Response> previousResponse) {
+        this.previousResponse = Optional.ofNullable(previousResponse);
     }
 
     /**
@@ -122,10 +148,10 @@ public class Connector {
      *
      * @param query        the query
      * @param loginHandler the {@link LoginHandler} for authentication
-     * @return the {@link Response}
      */
-    public final Response getWithLogin(String query, LoginHandler loginHandler) {
-        return get(query, login(loginHandler));
+    public final void getWithLogin(String query, LoginHandler loginHandler) {
+        response = get(query, login(loginHandler));
+        setPreviousResponse();
     }
 
     private RequestSpecification login(LoginHandler loginHandler) {
@@ -189,5 +215,45 @@ public class Connector {
             request.when().log().all();
         }
         return request;
+    }
+
+    public void verifyStatusCode(int expected) {
+        response.then().statusCode(is(expected));
+    }
+
+    public boolean hasPreviousResponse() {
+        return previousResponse.isPresent();
+    }
+
+    public Object pathFromPreviousResponse(String variablePath) {
+        return previousResponse.map(pR -> pR.path(prefix(variablePath))).orElseGet(() -> "");
+    }
+
+    public void assertResponse(String path, Matcher<?> matcher) {
+        response.then().assertThat().body(prefix(path), matcher);
+    }
+
+    public void clear() {
+        previousResponse = Optional.empty();
+    }
+
+    public Consumer<Object[]> thenContains(String dataPath) {
+        return items -> {
+            if (response.then().extract().path(prefix(dataPath)) instanceof List) {
+                assertResponse(dataPath, Matchers.hasItems(items));
+            } else {
+                assertResponse(dataPath, Matchers.containsString((String) items[0]));
+            }
+        };
+    }
+
+    public Consumer<Object[]> thenIs(String dataPath) {
+        return items -> {
+            if (response.then().extract().path(prefix(dataPath)) instanceof List) {
+                assertResponse(dataPath, containsInAnyOrder(items));
+            } else {
+                assertResponse(dataPath, is(items[0]));
+            }
+        };
     }
 }
