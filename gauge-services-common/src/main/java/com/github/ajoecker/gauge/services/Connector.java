@@ -1,7 +1,6 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.services.login.LoginHandler;
-import com.thoughtworks.gauge.Table;
 import io.restassured.http.ContentType;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
@@ -9,16 +8,13 @@ import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import static com.github.ajoecker.gauge.services.ServiceUtil.*;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Abstraction of a connection to a service. This is the glue to connect and send to a service, e.g. GraphQL or REST

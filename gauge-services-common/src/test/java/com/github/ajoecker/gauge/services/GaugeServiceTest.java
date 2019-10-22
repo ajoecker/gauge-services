@@ -127,7 +127,7 @@ public class GaugeServiceTest {
 
         Consumer<Object[]> consumer = objects -> {
             assertAll(
-                    () -> assertEquals(objects.length, 2),
+                    () -> assertEquals(2, objects.length),
                     () -> assertEquals(objects[0], Map.of("nationality", "German", "name", "Hans")),
                     () -> assertEquals(objects[1], Map.of("nationality", "Spain", "name", "Alicia"))
             );
@@ -146,7 +146,7 @@ public class GaugeServiceTest {
         String map = "{name: Hans, nationality: German}, {name: Alicia, nationality: Spain}";
         Consumer<Object[]> consumer = objects -> {
             assertAll(
-                    () -> assertEquals(objects.length, 2),
+                    () -> assertEquals(2, objects.length ),
                     () -> assertEquals(objects[0], Map.of("nationality", "German", "name", "Hans")),
                     () -> assertEquals(objects[1], Map.of("nationality", "Spain", "name", "Alicia"))
             );
@@ -165,9 +165,9 @@ public class GaugeServiceTest {
         String string = "Hans, Alicia";
         Consumer<Object[]> consumer = objects -> {
             assertAll(
-                    () -> assertEquals(objects.length, 2),
-                    () -> assertEquals(objects[0], "Hans"),
-                    () -> assertEquals(objects[1], "Alicia")
+                    () -> assertEquals(2, objects.length),
+                    () -> assertEquals("Hans", objects[0]),
+                    () -> assertEquals("Alicia", objects[1])
             );
         };
         Connector connector = new Connector() {

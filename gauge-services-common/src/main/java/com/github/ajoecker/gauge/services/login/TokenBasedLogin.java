@@ -3,7 +3,6 @@ package com.github.ajoecker.gauge.services.login;
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.google.common.base.Strings;
-import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
 import java.io.IOException;
