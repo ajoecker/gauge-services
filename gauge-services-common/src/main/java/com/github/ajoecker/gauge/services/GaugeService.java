@@ -4,7 +4,6 @@ import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.thoughtworks.gauge.AfterScenario;
 import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
-import org.hamcrest.Matchers;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,16 +12,24 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.github.ajoecker.gauge.services.ServiceUtil.*;
-import static com.github.ajoecker.gauge.services.ServiceUtil.split;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasItems;
 
 /**
  * The class provides the implementation of the gauge specs to validate different queries.
  */
 public class GaugeService {
-    private final Connector connector = Registry.getConnector();
-    private final LoginHandler loginHandler = Registry.getLoginHandler();
+    private final Connector connector;
+    private final LoginHandler loginHandler;
+
+    public GaugeService() {
+        this(Registry.getConnector(), Registry.getLoginHandler());
+    }
+
+    public GaugeService(Connector connector, LoginHandler loginHandler) {
+        this.connector = connector;
+        this.loginHandler = loginHandler;
+    }
+
 
     @Step("When posting <query>")
     public void posting(String query) {

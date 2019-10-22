@@ -37,7 +37,7 @@ public class Connector {
      *
      * @return the endpoint
      */
-    public final String getEndpoint() {
+    public String getEndpoint() {
         return endpoint;
     }
 
@@ -46,7 +46,7 @@ public class Connector {
      *
      * @param endpoint the endpoint
      */
-    public final void setEndpoint(String endpoint) {
+    public void setEndpoint(String endpoint) {
         if (endpoint != null && !endpoint.endsWith("/")) {
             endpoint = endpoint + "/";
         }
@@ -58,11 +58,11 @@ public class Connector {
      *
      * @param query the query
      */
-    public final void post(String query) {
+    public void post(String query) {
         post(query, "");
     }
 
-    public String extract(String path)  {
+    public String extract(String path) {
         return response.then().extract().path(prefix(path));
     }
 
@@ -72,7 +72,7 @@ public class Connector {
      * @param query     the query
      * @param variables the variables
      */
-    public final void post(String query, String variables) {
+    public void post(String query, String variables) {
         response = post(query, variables, startRequest());
         setPreviousResponse();
     }
@@ -82,7 +82,7 @@ public class Connector {
      *
      * @param query the query
      */
-    public final void get(String query) {
+    public void get(String query) {
         response = get(query, startRequest());
         setPreviousResponse();
     }
@@ -93,7 +93,7 @@ public class Connector {
      * @param query        the query
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public final void postWithLogin(String query, LoginHandler loginHandler) {
+    public void postWithLogin(String query, LoginHandler loginHandler) {
         response = post(query, "", login(loginHandler));
         setPreviousResponse();
     }
@@ -105,7 +105,7 @@ public class Connector {
      * @param variables    the variables
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public final void postWithLogin(String query, String variables, LoginHandler loginHandler) {
+    public void postWithLogin(String query, String variables, LoginHandler loginHandler) {
         response = post(query, variables, login(loginHandler));
         setPreviousResponse();
     }
@@ -135,7 +135,7 @@ public class Connector {
      * @param dataPath the json path
      * @return json path with guaranteed {@link #withPrefix()} at beginning
      */
-    public final String prefix(String dataPath) {
+    public String prefix(String dataPath) {
         String prefix = withPrefix();
         if (prefix.length() > 0 && !dataPath.startsWith(prefix)) {
             return prefix + dataPath;
@@ -149,7 +149,7 @@ public class Connector {
      * @param query        the query
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public final void getWithLogin(String query, LoginHandler loginHandler) {
+    public void getWithLogin(String query, LoginHandler loginHandler) {
         response = get(query, login(loginHandler));
         setPreviousResponse();
     }
