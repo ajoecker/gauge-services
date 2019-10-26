@@ -1,4 +1,4 @@
-# Gauge Graphql Test Project  
+# Gauge Serice Test Project  
 ## Idea  
 To have a simple and easy-usable project for testing services such as graphql or REST.  
 
@@ -22,6 +22,7 @@ To execute a specific test case you can
 The library can be used for two different api testings
 
 ### Graphql 
+#### Maven
 To use the library in a project simply put the following in the `pom.xml`  
 ```  
 <dependency>  
@@ -31,8 +32,13 @@ To use the library in a project simply put the following in the `pom.xml`
  <scope>test</scope>
 </dependency>  
 ```
+#### Gradle
+```
+testCompile 'com.github.ajoecker:gauge-graphql:0.3.1-SNAPSHOT'
+```
 
 ### REST 
+#### Maven
 To use the library in a project simply put the following in the `pom.xml`  
 ```  
 <dependency>  
@@ -42,7 +48,12 @@ To use the library in a project simply put the following in the `pom.xml`
  <scope>test</scope>
 </dependency>  
 ```
+#### Gradle
 
+#### Gradle
+```
+testCompile 'com.github.ajoecker:gauge-rest:0.3.1-SNAPSHOT'
+```
 ## Examples
 The project [gauge-service-examples](https://github.com/ajoecker/gauge-services-examples) shows some examples of the usage.
 
