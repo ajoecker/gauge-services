@@ -65,6 +65,11 @@ public class GaugeService {
         }
     }
 
+    @Step({"Then the request finished in less than <timeout> ms", "And the request finished in less than <timeout> ms"})
+    public void requestInLessThan(long timeout) {
+        connector.verifyRequestInLessThan(timeout);
+    }
+
     @Step({"Then status code is <code>", "And status code is <code>"})
     public void verifyStatusCode(int expected) {
         connector.verifyStatusCode(expected);

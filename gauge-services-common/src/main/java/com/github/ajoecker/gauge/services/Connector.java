@@ -252,4 +252,8 @@ public class Connector {
             }
         };
     }
+
+    public void verifyRequestInLessThan(long timeout) {
+        response.then().time(Matchers.lessThanOrEqualTo(timeout));
+    }
 }
