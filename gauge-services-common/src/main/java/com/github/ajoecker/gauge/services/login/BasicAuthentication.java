@@ -23,7 +23,7 @@ public class BasicAuthentication implements LoginHandler {
     @Override
     public void setLogin(RequestSpecification request) {
         if (!Strings.isNullOrEmpty(user) && !Strings.isNullOrEmpty(password)) {
-            request.auth().basic(user, password);
+            request.auth().preemptive().basic(user, password);
         }
     }
 

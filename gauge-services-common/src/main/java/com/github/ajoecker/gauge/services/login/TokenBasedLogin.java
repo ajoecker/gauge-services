@@ -35,7 +35,7 @@ public final class TokenBasedLogin implements LoginHandler {
     @Override
     public void setLogin(RequestSpecification request) {
         if (!Strings.isNullOrEmpty(loginToken)) {
-            request.auth().oauth2(loginToken);
+            request.auth().preemptive().oauth2(loginToken);
         }
     }
 
