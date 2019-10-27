@@ -30,7 +30,6 @@ public class GaugeService {
         this.loginHandler = loginHandler;
     }
 
-
     @Step("When posting <query>")
     public void posting(String query) {
         postWithVariables(query, "");
@@ -65,9 +64,16 @@ public class GaugeService {
         }
     }
 
-    @Step({"Then the request finished in less than <timeout> ms", "And the request finished in less than <timeout> ms"})
-    public void requestInLessThan(long timeout) {
+    @Step({"Then the request finished in less than <timeout> ms", "And the request finished in less than <timeout> ms",
+            "Then the request finished in less than <timeout>ms", "And the request finished in less than <timeout>ms"})
+    public void requestInLessThanMs(long timeout) {
         connector.verifyRequestInLessThan(timeout);
+    }
+
+    @Step({"Then the request finished in less than <timeout> s", "And the request finished in less than <timeout> s",
+            "Then the request finished in less than <timeout>s", "And the request finished in less than <timeout>s"})
+    public void requestInLessThan(long timeout) {
+        requestInLessThanMs(timeout * 1000);
     }
 
     @Step({"Then status code is <code>", "And status code is <code>"})
@@ -116,7 +122,6 @@ public class GaugeService {
     public void useEndpoint(String endpoint) {
         connector.setEndpoint(endpoint);
     }
-
 
     @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})
     public void thenEmpty(String dataPath) {

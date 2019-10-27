@@ -1,6 +1,17 @@
 package com.github.ajoecker.gauge.services;
 
 public class VariableAccessor {
+    private static final String FAILURE = "failure";
+    private static final String ALL = "all";
+
+    public boolean logFailure() {
+        return System.getenv("gauge.service.log").equalsIgnoreCase(FAILURE);
+    }
+
+    public boolean logAll() {
+        return System.getenv("gauge.service.log").equalsIgnoreCase(ALL);
+    }
+
     public String user() {
         return System.getenv("gauge.service.user");
     }
@@ -19,5 +30,9 @@ public class VariableAccessor {
 
     public String tokenQueryFile() {
         return System.getenv("gauge.service.token.query");
+    }
+
+    public String endpoint() {
+        return System.getenv("gauge.service.endpoint");
     }
 }

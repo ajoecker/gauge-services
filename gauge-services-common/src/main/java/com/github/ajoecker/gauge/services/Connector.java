@@ -23,18 +23,15 @@ public class Connector {
     private String endpoint;
     private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
     private Response response;
+    private VariableAccessor variableAccessor;
 
     public Connector() {
-        setEndpoint(System.getenv("gauge.service.endpoint"));
+        this(new VariableAccessor());
     }
 
-    /**
-     * Returns then endpoint, the service is querying
-     *
-     * @return the endpoint
-     */
-    public String getEndpoint() {
-        return endpoint;
+    public Connector(VariableAccessor variableAccessor) {
+        this.variableAccessor = variableAccessor;
+        setEndpoint(variableAccessor.endpoint());
     }
 
     /**
@@ -169,12 +166,14 @@ public class Connector {
         return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
                 .body(bodyFor(query, variables))
                 .when()
-                .post(getEndpoint()));
+                .post(endpoint));
     }
 
     private Response checkDebugPrint(Response response) {
-        if (Boolean.parseBoolean(System.getenv("gauge.service.debug"))) {
+        if (variableAccessor.logAll()) {
             response.then().log().all();
+        } else if (variableAccessor.logFailure()) {
+            response.then().log().ifValidationFails();
         }
         return response;
     }
@@ -202,13 +201,15 @@ public class Connector {
     private Response get(String query, RequestSpecification request) {
         return checkDebugPrint(request.contentType(ContentType.JSON)
                 .when()
-                .get(getEndpoint() + query));
+                .get(endpoint + query));
     }
 
     private RequestSpecification startRequest() {
         RequestSpecification request = given();
-        if (Boolean.parseBoolean(System.getenv("gauge.service.debug"))) {
+        if (variableAccessor.logAll()) {
             request.when().log().all();
+        } else if (variableAccessor.logFailure()) {
+            request.when().log().ifValidationFails();
         }
         return request;
     }
