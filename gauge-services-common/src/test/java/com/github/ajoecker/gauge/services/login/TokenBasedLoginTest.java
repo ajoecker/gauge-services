@@ -2,27 +2,30 @@ package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.VariableAccessor;
 import io.restassured.specification.AuthenticationSpecification;
+import io.restassured.specification.PreemptiveAuthSpec;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 public class TokenBasedLoginTest {
-    private AuthenticationSpecification authenticationSpecification;
     private RequestSpecification requestSpecification;
+    private PreemptiveAuthSpec preemptiveAuthSpec;
 
     @BeforeEach
     public void setup() {
         requestSpecification = Mockito.mock(RequestSpecification.class);
-        authenticationSpecification = Mockito.mock(AuthenticationSpecification.class);
+        AuthenticationSpecification authenticationSpecification = mock(AuthenticationSpecification.class);
+        preemptiveAuthSpec = mock(PreemptiveAuthSpec.class);
         when(requestSpecification.auth()).thenReturn(authenticationSpecification);
+        when(authenticationSpecification.preemptive()).thenReturn(preemptiveAuthSpec);
     }
 
     @Test
-    public void tokenIsGivenNNoQueryIsRequired() {
+    public void tokenIsGivenNoQueryIsRequired() {
         TokenBasedLogin tokenBasedLogin = new TokenBasedLogin(new VariableAccessor() {
             @Override
             public String token() {
@@ -31,6 +34,6 @@ public class TokenBasedLoginTest {
         });
         tokenBasedLogin.loginWithSystemCredentials(null);
         tokenBasedLogin.setLogin(requestSpecification);
-        verify(authenticationSpecification).oauth2("12345");
+        verify(preemptiveAuthSpec).oauth2("12345");
     }
 }

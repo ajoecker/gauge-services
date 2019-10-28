@@ -2,6 +2,7 @@ package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.VariableAccessor;
 import io.restassured.specification.AuthenticationSpecification;
+import io.restassured.specification.PreemptiveAuthSpec;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,14 +11,16 @@ import org.mockito.Mockito;
 import static org.mockito.Mockito.*;
 
 public class BasicAuthenticationTest {
-    private AuthenticationSpecification authenticationSpecification;
     private RequestSpecification requestSpecification;
+    private PreemptiveAuthSpec preemptiveAuthSpec;
 
     @BeforeEach
     public void setup() {
         requestSpecification = Mockito.mock(RequestSpecification.class);
-        authenticationSpecification = Mockito.mock(AuthenticationSpecification.class);
+        AuthenticationSpecification authenticationSpecification = mock(AuthenticationSpecification.class);
+        preemptiveAuthSpec = mock(PreemptiveAuthSpec.class);
         when(requestSpecification.auth()).thenReturn(authenticationSpecification);
+        when(authenticationSpecification.preemptive()).thenReturn(preemptiveAuthSpec);
     }
 
     @Test
@@ -25,7 +28,7 @@ public class BasicAuthenticationTest {
         BasicAuthentication basicAuthentication = new BasicAuthentication(new VariableAccessor());
         basicAuthentication.loginWithGivenCredentials("user", "password", null);
         basicAuthentication.setLogin(requestSpecification);
-        verify(authenticationSpecification).basic("user", "password");
+        verify(preemptiveAuthSpec).basic("user", "password");
     }
 
     @Test
@@ -33,7 +36,7 @@ public class BasicAuthenticationTest {
         BasicAuthentication basicAuthentication = new BasicAuthentication(new VariableAccessor());
         basicAuthentication.loginWithGivenCredentials(null, "password", null);
         basicAuthentication.setLogin(requestSpecification);
-        verify(authenticationSpecification, never()).basic(null, "password");
+        verify(preemptiveAuthSpec, never()).basic(null, "password");
     }
 
     @Test
@@ -41,7 +44,7 @@ public class BasicAuthenticationTest {
         BasicAuthentication basicAuthentication = new BasicAuthentication(new VariableAccessor());
         basicAuthentication.loginWithGivenCredentials("user", null, null);
         basicAuthentication.setLogin(requestSpecification);
-        Mockito.verify(authenticationSpecification, never()).basic("user", "password");
+        Mockito.verify(preemptiveAuthSpec, never()).basic("user", "password");
     }
 
     @Test
@@ -59,6 +62,6 @@ public class BasicAuthenticationTest {
         });
         basicAuthentication.loginWithSystemCredentials(null);
         basicAuthentication.setLogin(requestSpecification);
-        Mockito.verify(authenticationSpecification).basic("user", "password");
+        Mockito.verify(preemptiveAuthSpec).basic("user", "password");
     }
 }
