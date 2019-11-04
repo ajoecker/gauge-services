@@ -5,11 +5,15 @@ public class VariableAccessor {
     private static final String ALL = "all";
 
     public boolean logFailure() {
-        return System.getenv("gauge.service.log").equalsIgnoreCase(FAILURE);
+        return checkLog(FAILURE);
+    }
+
+    private boolean checkLog(String level) {
+        return level.equalsIgnoreCase(System.getenv("gauge.service.log"));
     }
 
     public boolean logAll() {
-        return System.getenv("gauge.service.log").equalsIgnoreCase(ALL);
+        return checkLog(ALL);
     }
 
     public String user() {

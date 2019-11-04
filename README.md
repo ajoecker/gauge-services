@@ -197,8 +197,8 @@ Furthermore one can use variable files for graphql queries, when e.g. complex va
 
 E.g. given the following graphql query:
 ```
-mutation createUser($user: CreateUserInput!) {
-    createUser(user: $user) {
+mutation newUser($user: NewUserInputData!) {
+    newUser(user: $user) {
         id
         success
     }
@@ -218,6 +218,14 @@ for the latter the input would look like this:
   }
 }
 ```
+### Timeouts
+The library also allows to verify the request time of a step via
+```
+* And the request finished in less than "5000" ms
+* And the request finished in less than "5" s
+```
+Currently only `ms` (milliseconds) and `s` (seconds) are supported
+
 ## Configuration
 In the Gauge environment the following keys are recognized
  
