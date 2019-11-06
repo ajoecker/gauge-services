@@ -14,6 +14,7 @@ import io.restassured.specification.RequestSpecification;
 public class BasicAuthentication implements LoginHandler {
     private String user;
     private String password;
+    private String token;
     private VariableAccessor variableAccessor;
 
     public BasicAuthentication(VariableAccessor variableAccessor) {
@@ -24,6 +25,9 @@ public class BasicAuthentication implements LoginHandler {
     public void setLogin(RequestSpecification request) {
         if (!Strings.isNullOrEmpty(user) && !Strings.isNullOrEmpty(password)) {
             request.auth().preemptive().basic(user, password);
+        }
+        else if (!Strings.isNullOrEmpty(token)) {
+            request.header("Authorization", token);
         }
     }
 
@@ -37,5 +41,6 @@ public class BasicAuthentication implements LoginHandler {
     public void loginWithSystemCredentials(Connector connector) {
         this.user = variableAccessor.user();
         this.password = variableAccessor.password();
+        this.token = variableAccessor.token();
     }
 }

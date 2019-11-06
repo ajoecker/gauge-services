@@ -98,6 +98,18 @@ public final class ServiceUtil {
         return query;
     }
 
+    public static String replaceMasked(String query, String newValue) {
+        return query.replaceAll(configurationSource.variableMask() + ".+" + configurationSource.variableMask(), newValue);
+    }
+
+    public static String extractPlaceholder(String query) {
+        int indexOf = query.indexOf(configurationSource.variableMask());
+        if (indexOf > 0) {
+            return query.substring(indexOf + 1, query.indexOf(configurationSource.variableMask(), indexOf + 1));
+        }
+        return "";
+    }
+
     /**
      * Splits the given string based on {@link #COMMA_SEPARATED}
      *

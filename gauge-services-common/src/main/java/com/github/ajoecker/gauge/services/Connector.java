@@ -1,20 +1,23 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.services.login.LoginHandler;
+import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
+import io.restassured.path.json.JsonPath;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Abstraction of a connection to a service. This is the glue to connect and send to a service, e.g. GraphQL or REST
@@ -24,6 +27,7 @@ public class Connector {
     private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
     private Response response;
     private VariableAccessor variableAccessor;
+    private Map<String, Object> valueCache = new HashMap<>();
 
     public Connector() {
         this(new VariableAccessor());
@@ -143,6 +147,10 @@ public class Connector {
      * @param loginHandler the {@link LoginHandler} for authentication
      */
     public void getWithLogin(String query, LoginHandler loginHandler) {
+        String variable = ServiceUtil.extractPlaceholder(query);
+        if (!Strings.isNullOrEmpty(variable) && valueCache.containsKey(variable)) {
+            query = ServiceUtil.replaceMasked(query, valueCache.get(variable).toString());
+        }
         response = get(query, login(loginHandler));
         setPreviousResponse();
     }
@@ -232,6 +240,7 @@ public class Connector {
 
     public void clear() {
         previousResponse = Optional.empty();
+        valueCache = new HashMap<>();
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
@@ -256,5 +265,14 @@ public class Connector {
 
     public void verifyRequestInLessThan(long timeout) {
         response.then().time(Matchers.lessThanOrEqualTo(timeout));
+    }
+
+    public void extract(String variable, String parent, String attribute, String valueToMatch) {
+        Object path = response.then().extract().path(parent);
+        if (path instanceof List) {
+            List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
+            Optional<Map<Object, Object>> first = theList.stream().filter(map -> map.get(attribute).equals(valueToMatch)).findFirst();
+            first.ifPresentOrElse(f -> valueCache.put(variable, f.get(variable)), () -> System.out.println("nothing found in " + theList));
+        }
     }
 }

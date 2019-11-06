@@ -1,5 +1,7 @@
 package com.github.ajoecker.gauge.services;
 
+import java.util.Optional;
+
 import static com.github.ajoecker.gauge.services.ServiceUtil.orDefault;
 
 /**

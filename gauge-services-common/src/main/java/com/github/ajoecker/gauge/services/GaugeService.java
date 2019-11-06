@@ -44,6 +44,11 @@ public class GaugeService {
         connector.getWithLogin(query, loginHandler);
     }
 
+    @Step({"Then extract <variable> from <parent> where <attribute> is <value>", "And extract <path> from <parent> where <attribute> is <value>"})
+    public void extractPath(String variable, String parent, String attributePath, String valueToMatch) {
+        connector.extract(variable, parent, attributePath, valueToMatch);
+    }
+
     private void compare(Object value, Consumer<Object[]> match) {
         if (value instanceof String) {
             compareStringValue((String) value, match);
