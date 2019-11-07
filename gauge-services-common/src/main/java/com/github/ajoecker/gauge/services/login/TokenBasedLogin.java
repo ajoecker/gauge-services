@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import static com.github.ajoecker.gauge.services.ServiceUtil.replaceVariablesInQuery;
@@ -24,13 +25,8 @@ import static java.nio.file.Files.readString;
  * Or the token can be dynamically queried, when the configurations <code>gauge.service.token.query</code> (the file
  * with the query to login) and <code>gauge.service.token.path</code> (the jsonpath to the token in the response) are given.
  */
-public final class TokenBasedLogin implements LoginHandler {
+public final class TokenBasedLogin extends AbstractLoginHandler {
     private String loginToken;
-    private VariableAccessor variableAccessor;
-
-    public TokenBasedLogin(VariableAccessor variableAccessor) {
-        this.variableAccessor = variableAccessor;
-    }
 
     @Override
     public void setLogin(RequestSpecification request) {
@@ -41,7 +37,7 @@ public final class TokenBasedLogin implements LoginHandler {
 
     @Override
     public void loginWithSystemCredentials(Connector connector) {
-        loginToken = Optional.ofNullable(variableAccessor.token())
+        loginToken = Optional.ofNullable(connector.getVariableAccessor().token())
                 .orElseGet(() -> sendLoginQuery(connector, UnaryOperator.identity()));
     }
 
@@ -52,15 +48,15 @@ public final class TokenBasedLogin implements LoginHandler {
 
     private String sendLoginQuery(Connector connector, UnaryOperator<String> queryMapper) {
         try {
-            connector.post(readQuery(queryMapper));
-            return connector.extract(variableAccessor.tokenPath());
+            connector.post(readQuery(queryMapper, connector.getVariableAccessor().tokenQueryFile()));
+            return connector.extract(connector.getVariableAccessor().tokenPath());
         } catch (URISyntaxException | IOException e) {
             throw new QueryException(e);
         }
     }
 
-    private String readQuery(UnaryOperator<String> mapper) throws IOException, URISyntaxException {
-        String queryFile = "/" + variableAccessor.tokenQueryFile();
+    private String readQuery(UnaryOperator<String> mapper, String tokenQueryFile) throws IOException, URISyntaxException {
+        String queryFile = "/" + tokenQueryFile;
         URI uri = TokenBasedLogin.class.getResource(queryFile).toURI();
         return mapper.apply(readString(Paths.get(uri)));
     }

@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class GaugeServiceTest {
-    BasicAuthentication loginHandler = new BasicAuthentication(new VariableAccessor());
+    BasicAuthentication loginHandler = new BasicAuthentication();
 
     @Test
     public void postWithoutVariablesArePassedToConnector() {
@@ -146,7 +146,7 @@ public class GaugeServiceTest {
         String map = "{name: Hans, nationality: German}, {name: Alicia, nationality: Spain}";
         Consumer<Object[]> consumer = objects -> {
             assertAll(
-                    () -> assertEquals(2, objects.length ),
+                    () -> assertEquals(2, objects.length),
                     () -> assertEquals(objects[0], Map.of("nationality", "German", "name", "Hans")),
                     () -> assertEquals(objects[1], Map.of("nationality", "Spain", "name", "Alicia"))
             );

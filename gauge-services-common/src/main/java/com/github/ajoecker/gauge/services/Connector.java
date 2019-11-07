@@ -34,8 +34,16 @@ public class Connector {
     }
 
     public Connector(VariableAccessor variableAccessor) {
-        this.variableAccessor = variableAccessor;
+        setVariableAccessor(variableAccessor);
         setEndpoint(variableAccessor.endpoint());
+    }
+
+    public void setVariableAccessor(VariableAccessor variableAccessor) {
+        this.variableAccessor = variableAccessor;
+    }
+
+    public VariableAccessor getVariableAccessor() {
+        return variableAccessor;
     }
 
     /**
@@ -44,9 +52,6 @@ public class Connector {
      * @param endpoint the endpoint
      */
     public void setEndpoint(String endpoint) {
-        if (endpoint != null && !endpoint.endsWith("/")) {
-            endpoint = endpoint + "/";
-        }
         this.endpoint = endpoint;
     }
 

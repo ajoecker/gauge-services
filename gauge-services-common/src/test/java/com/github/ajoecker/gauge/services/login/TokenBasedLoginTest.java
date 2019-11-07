@@ -1,5 +1,6 @@
 package com.github.ajoecker.gauge.services.login;
 
+import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.VariableAccessor;
 import io.restassured.specification.AuthenticationSpecification;
 import io.restassured.specification.PreemptiveAuthSpec;
@@ -26,13 +27,18 @@ public class TokenBasedLoginTest {
 
     @Test
     public void tokenIsGivenNoQueryIsRequired() {
-        TokenBasedLogin tokenBasedLogin = new TokenBasedLogin(new VariableAccessor() {
+        TokenBasedLogin tokenBasedLogin = new TokenBasedLogin();
+        tokenBasedLogin.loginWithSystemCredentials(new Connector() {
             @Override
-            public String token() {
-                return "12345";
+            public VariableAccessor getVariableAccessor() {
+                return new VariableAccessor() {
+                    @Override
+                    public String token() {
+                        return "12345";
+                    }
+                };
             }
         });
-        tokenBasedLogin.loginWithSystemCredentials(null);
         tokenBasedLogin.setLogin(requestSpecification);
         verify(preemptiveAuthSpec).oauth2("12345");
     }

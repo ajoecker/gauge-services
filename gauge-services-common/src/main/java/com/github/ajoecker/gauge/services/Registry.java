@@ -34,11 +34,11 @@ public final class Registry {
     private static void setLoginHandler(String type) {
         switch (LoginType.valueOf(type.toUpperCase())) {
             case BASIC:
-                loginHandler = new BasicAuthentication(new VariableAccessor());
+                loginHandler = new BasicAuthentication();
                 return;
 
             case TOKEN:
-                loginHandler = new TokenBasedLogin(new VariableAccessor());
+                loginHandler = new TokenBasedLogin();
                 return;
 
             default:

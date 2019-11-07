@@ -173,6 +173,19 @@ public class GaugeService {
         login(user, password);
     }
 
+    @Step("Use <endpoint> where user logs in with <token>")
+    public void endpointWithLogin(String endpoint, String token) {
+        useEndpoint(endpoint);
+        VariableAccessor current = connector.getVariableAccessor();
+        connector.setVariableAccessor(new VariableAccessorDelegate(current) {
+            @Override
+            public String token() {
+                return token;
+            }
+        });
+        loginWIthNoCredentials();
+    }
+
     @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})
     public void thenEmpty(String dataPath) {
         connector.assertResponse(connector.prefix(dataPath), empty());
