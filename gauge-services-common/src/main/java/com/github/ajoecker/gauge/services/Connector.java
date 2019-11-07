@@ -11,12 +11,11 @@ import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import static com.github.ajoecker.gauge.services.ServiceUtil.splitIntoKeyValueList;
 import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -79,6 +78,7 @@ public class Connector {
      * Sends a get with the given query
      *
      * @param query the query
+     * @return the response of the get query
      */
     public final Response get(String query) {
         return get(query, "", startRequest());
@@ -144,6 +144,7 @@ public class Connector {
      * Sends a get with the given query and ensures that one is authenticated.
      *
      * @param query        the query
+     * @param parameter    optional parameters of the query, empy string if non available
      * @param loginHandler the {@link LoginHandler} for authentication
      */
     public void getWithLogin(String query, String parameter, LoginHandler loginHandler) {
@@ -273,12 +274,32 @@ public class Connector {
         response.then().time(Matchers.lessThanOrEqualTo(timeout));
     }
 
-    public void extract(String variable, String parent, String attribute, String valueToMatch) {
+    public void extract(String variable, String parent, String attributeValue) {
+        List<String> keyValueList = splitIntoKeyValueList(attributeValue);
         Object path = response.then().extract().path(parent);
         if (path instanceof List) {
             List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
-            Optional<Map<Object, Object>> first = theList.stream().filter(map -> map.get(attribute).equals(valueToMatch)).findFirst();
+            Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
             first.ifPresentOrElse(f -> getScenarioDataStore().put(variable, f.get(variable)), () -> System.err.println("nothing found in " + theList));
         }
+    }
+
+    private boolean matches(Map<Object, Object> target, List<String> keyValues) {
+        Iterator<String> iterator = keyValues.iterator();
+        while (iterator.hasNext()) {
+            if (!target.get(iterator.next()).equals(iterator.next())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void main(String[] args) {
+        String s = "last_name=Doe,first_name=John";
+        String[] sep = s.split(",");
+        List<String> collect = Arrays.stream(sep).flatMap(s1 -> Arrays.stream(s1.split("="))).collect(Collectors.toList());
+        System.out.println(collect);
+        boolean matches = new Connector().matches(Map.of("last_name", "Doe", "first_name", "John"), collect);
+        System.out.println(matches);
     }
 }

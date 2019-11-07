@@ -5,6 +5,7 @@ import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
 import com.thoughtworks.gauge.TableRow;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -159,5 +160,11 @@ public final class ServiceUtil {
      */
     static Map<String, String> fromTable(TableRow tableRow) {
         return tableRow.getTableCells().stream().collect(Collectors.toMap(TableCell::getColumnName, TableCell::getValue));
+    }
+
+    static List<String> splitIntoKeyValueList(String s) {
+        return Arrays.stream(s.split(configurationSource.separator()))
+                .flatMap(s1 -> Arrays.stream(s1.split(configurationSource.variableSeparator())))
+                .collect(Collectors.toList());
     }
 }

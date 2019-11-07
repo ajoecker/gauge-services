@@ -48,14 +48,16 @@ public class GaugeService {
         connector.getWithLogin(query, "", loginHandler);
     }
 
-    @Step({"Then extracting <variable> from <parent> where <attribute> is <value>", "And extracting <path> from <parent> where <attribute> is <value>"})
-    public void extractPathWithParent(String variable, String parent, String attributePath, String valueToMatch) {
-        connector.extract(variable, parent, attributePath, valueToMatch);
+    @Step({"Then extracting <variable> from <parent> where <attributevalue>",
+            "And extracting <path> from <parent> where <attributevalue>"})
+    public void extractPathWithParent(String variable, String parent, String attributeValue) {
+        connector.extract(variable, parent, attributeValue);
     }
 
-    @Step({"Then extracting <variable> where <attribute> is <value>", "And extracting <path> where <attribute> is <value>"})
-    public void extractPath(String variable, String attributePath, String valueToMatch) {
-        connector.extract(variable, "", attributePath, valueToMatch);
+    @Step({"Then extracting <variable> where <attributevalue>",
+            "And extracting <path> where <attributevalue>"})
+    public void extractPath(String variable, String attributeValue) {
+        connector.extract(variable, "", attributeValue);
     }
 
     private void compare(Object value, Consumer<Object[]> match) {
@@ -103,9 +105,8 @@ public class GaugeService {
                     .map(tableRow -> tableRow.getCell("name") + "=" + tableRow.getCell("value"))
                     .collect(Collectors.joining("&"));
             getWithParameters(query, getParameters);
-        }
-        else if(parameters instanceof String) {
-            getWithParameters(query, ((String) parameters).replaceAll("\\s+", "").replace(',','&'));
+        } else if (parameters instanceof String) {
+            getWithParameters(query, ((String) parameters).replaceAll("\\s+", "").replace(',', '&'));
         }
     }
 
@@ -158,6 +159,18 @@ public class GaugeService {
     @Step("Use <endpoint>")
     public void useEndpoint(String endpoint) {
         connector.setEndpoint(endpoint);
+    }
+
+    @Step("Use <endpoint> where user is logged in")
+    public void useEndpointWithLoggedInUser(String endpoint) {
+        useEndpoint(endpoint);
+        loginWIthNoCredentials();
+    }
+
+    @Step("Use <endpoint> where <user> logs in with password <password>")
+    public void endpointWithLogin(String endpoint, String user, String password) {
+        useEndpoint(endpoint);
+        login(user, password);
     }
 
     @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})

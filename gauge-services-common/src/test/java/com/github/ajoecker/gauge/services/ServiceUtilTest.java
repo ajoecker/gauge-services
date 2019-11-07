@@ -7,10 +7,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.github.ajoecker.gauge.services.ServiceUtil.isMap;
+import static com.github.ajoecker.gauge.services.ServiceUtil.splitIntoKeyValueList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ServiceUtilTest {
     @Test
@@ -29,14 +34,14 @@ public class ServiceUtilTest {
     public void parsesSingleMap() {
         String mapString = "{name: Banksy, nationality: British}";
         List<Map<String, String>> parse = ServiceUtil.parseMap(mapString);
-        Assertions.assertEquals(parse, List.of(Map.of("name", "Banksy", "nationality", "British")));
+        assertEquals(parse, List.of(Map.of("name", "Banksy", "nationality", "British")));
     }
 
     @Test
     public void parsesMultiMap() {
         String mapString = "{name: Banksy, nationality: British}, {name: Pablo Picasso, nationality: Spanish}";
         List<Map<String, String>> parse = ServiceUtil.parseMap(mapString);
-        Assertions.assertEquals(parse, List.of(
+        assertEquals(parse, List.of(
                 Map.of("name", "Banksy", "nationality", "British"),
                 Map.of("name", "Pablo Picasso", "nationality", "Spanish")
         ));
@@ -60,7 +65,7 @@ public class ServiceUtilTest {
                 "        }\n" +
                 "    }\n" +
                 "}";
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=2", new Connector()), queryReplaced);
+        assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=2", new Connector()), queryReplaced);
     }
 
     @Test
@@ -87,7 +92,7 @@ public class ServiceUtilTest {
                 return "##";
             }
         };
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=2", new Connector()), queryReplaced);
+        assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=2", new Connector()), queryReplaced);
     }
 
     @Test
@@ -113,7 +118,13 @@ public class ServiceUtilTest {
 
         Connector connector = new Connector();
         connector.setPreviousResponse(re);
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=%foo%", connector), queryReplaced);
+        assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=%foo%", connector), queryReplaced);
+    }
+
+    @Test
+    public void splitCorrectly() {
+        List<String> strings = splitIntoKeyValueList("last_name=Doe,first_name=John");
+        assertThat(strings).containsExactly("last_name", "Doe", "first_name", "John");
     }
 
     @BeforeEach

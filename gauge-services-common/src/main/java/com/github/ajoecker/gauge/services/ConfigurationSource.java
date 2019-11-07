@@ -57,7 +57,7 @@ public interface ConfigurationSource {
      * <p>
      * For example
      * <pre>
-     *     * When sending &lt;file:/src/test/resources/query&gt; with "size:4"
+     *     * When sending &lt;file:/src/test/resources/query&gt; with "size=4"
      * </pre>
      *
      * @return the separator between variables
