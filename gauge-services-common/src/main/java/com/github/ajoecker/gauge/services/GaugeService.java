@@ -48,12 +48,12 @@ public class GaugeService {
         connector.getWithLogin(query, "", loginHandler);
     }
 
-    @Step({"Then extract <variable> from <parent> where <attribute> is <value>", "And extract <path> from <parent> where <attribute> is <value>"})
+    @Step({"Then extracting <variable> from <parent> where <attribute> is <value>", "And extracting <path> from <parent> where <attribute> is <value>"})
     public void extractPathWithParent(String variable, String parent, String attributePath, String valueToMatch) {
         connector.extract(variable, parent, attributePath, valueToMatch);
     }
 
-    @Step({"Then extract <variable> where <attribute> is <value>", "And extract <path> where <attribute> is <value>"})
+    @Step({"Then extracting <variable> where <attribute> is <value>", "And extracting <path> where <attribute> is <value>"})
     public void extractPath(String variable, String attributePath, String valueToMatch) {
         connector.extract(variable, "", attributePath, valueToMatch);
     }
