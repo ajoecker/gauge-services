@@ -4,8 +4,6 @@ import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.thoughtworks.gauge.AfterScenario;
 import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
-import com.thoughtworks.gauge.datastore.DataStoreFactory;
-import org.assertj.core.api.Assertions;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,6 +44,11 @@ public class GaugeService {
     @Step("When getting <query>")
     public void get(String query) {
         connector.getWithLogin(query, "", loginHandler);
+    }
+
+    @Step("When deleting <path>")
+    public void delete(String query) {
+        connector.deleteWithLogin(query, loginHandler);
     }
 
     @Step({"Then extracting <variable> from <parent> where <attributevalue>",

@@ -164,6 +164,12 @@ public class Connector {
         setPreviousResponse();
     }
 
+    public void deleteWithLogin(String query, LoginHandler loginHandler) {
+        RequestSpecification request = login(loginHandler);
+        response = checkDebugPrint(request.delete(endpoint + "/" + query));
+        setPreviousResponse();
+    }
+
     private RequestSpecification login(LoginHandler loginHandler) {
         RequestSpecification request = startRequest();
         loginHandler.setLogin(request);
@@ -297,14 +303,5 @@ public class Connector {
             }
         }
         return true;
-    }
-
-    public static void main(String[] args) {
-        String s = "last_name=Doe,first_name=John";
-        String[] sep = s.split(",");
-        List<String> collect = Arrays.stream(sep).flatMap(s1 -> Arrays.stream(s1.split("="))).collect(Collectors.toList());
-        System.out.println(collect);
-        boolean matches = new Connector().matches(Map.of("last_name", "Doe", "first_name", "John"), collect);
-        System.out.println(matches);
     }
 }
