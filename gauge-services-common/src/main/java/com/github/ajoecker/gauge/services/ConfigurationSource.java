@@ -52,7 +52,7 @@ public interface ConfigurationSource {
     /**
      * Returns the string that separates variables in the spec file to be replaced for an actual query.
      * <p>
-     * The default value is <code>:</code> and is read in a Gauge project via the environment variable
+     * The default value is <code>=</code> and is read in a Gauge project via the environment variable
      * <code>gauge.service.variable.separator</code>. If this variable is not existing or empty, the default value is taken.
      * <p>
      * For example
@@ -63,7 +63,7 @@ public interface ConfigurationSource {
      * @return the separator between variables
      */
     default String variableSeparator() {
-        return orDefault("gauge.service.variable.separator", ":");
+        return orDefault("gauge.service.variable.separator", "=");
     }
 
 

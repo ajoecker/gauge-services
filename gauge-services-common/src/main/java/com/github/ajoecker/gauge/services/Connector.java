@@ -2,6 +2,7 @@ package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.google.common.base.Strings;
+import com.thoughtworks.gauge.datastore.DataStoreFactory;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.ExtractableResponse;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -27,7 +29,6 @@ public class Connector {
     private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
     private Response response;
     private VariableAccessor variableAccessor;
-    private Map<String, Object> valueCache = new HashMap<>();
 
     public Connector() {
         this(new VariableAccessor());
@@ -79,9 +80,8 @@ public class Connector {
      *
      * @param query the query
      */
-    public void get(String query) {
-        response = get(query, startRequest());
-        setPreviousResponse();
+    public final Response get(String query) {
+        return get(query, "", startRequest());
     }
 
     /**
@@ -146,12 +146,15 @@ public class Connector {
      * @param query        the query
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public void getWithLogin(String query, LoginHandler loginHandler) {
+    public void getWithLogin(String query, String parameter, LoginHandler loginHandler) {
         String variable = ServiceUtil.extractPlaceholder(query);
-        if (!Strings.isNullOrEmpty(variable) && valueCache.containsKey(variable)) {
-            query = ServiceUtil.replaceMasked(query, valueCache.get(variable).toString());
+        if (!Strings.isNullOrEmpty(variable)) {
+            Object extractedValueFromCache = getScenarioDataStore().get(variable);
+            if (extractedValueFromCache != null) {
+                query = ServiceUtil.replaceMasked(query, extractedValueFromCache.toString());
+            }
         }
-        response = get(query, login(loginHandler));
+        response = get(query, parameter, login(loginHandler));
         setPreviousResponse();
     }
 
@@ -206,10 +209,14 @@ public class Connector {
      * @param request the request
      * @return the {@link Response}
      */
-    private Response get(String query, RequestSpecification request) {
+    private Response get(String query, String parameters, RequestSpecification request) {
+        String queryPath = endpoint + query;
+        if (!Strings.isNullOrEmpty(parameters)) {
+            queryPath = queryPath + "?" + parameters;
+        }
         return checkDebugPrint(request.contentType(ContentType.JSON)
                 .when()
-                .get(endpoint + query));
+                .get(queryPath));
     }
 
     private RequestSpecification startRequest() {
@@ -240,7 +247,6 @@ public class Connector {
 
     public void clear() {
         previousResponse = Optional.empty();
-        valueCache = new HashMap<>();
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
@@ -272,7 +278,7 @@ public class Connector {
         if (path instanceof List) {
             List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
             Optional<Map<Object, Object>> first = theList.stream().filter(map -> map.get(attribute).equals(valueToMatch)).findFirst();
-            first.ifPresentOrElse(f -> valueCache.put(variable, f.get(variable)), () -> System.out.println("nothing found in " + theList));
+            first.ifPresentOrElse(f -> getScenarioDataStore().put(variable, f.get(variable)), () -> System.err.println("nothing found in " + theList));
         }
     }
 }

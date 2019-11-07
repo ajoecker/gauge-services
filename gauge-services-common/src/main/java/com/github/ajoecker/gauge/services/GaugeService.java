@@ -4,6 +4,8 @@ import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.thoughtworks.gauge.AfterScenario;
 import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
+import com.thoughtworks.gauge.datastore.DataStoreFactory;
+import org.assertj.core.api.Assertions;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,6 +14,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.github.ajoecker.gauge.services.ServiceUtil.*;
+import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.empty;
 
 /**
@@ -41,12 +45,17 @@ public class GaugeService {
 
     @Step("When getting <query>")
     public void get(String query) {
-        connector.getWithLogin(query, loginHandler);
+        connector.getWithLogin(query, "", loginHandler);
     }
 
     @Step({"Then extract <variable> from <parent> where <attribute> is <value>", "And extract <path> from <parent> where <attribute> is <value>"})
-    public void extractPath(String variable, String parent, String attributePath, String valueToMatch) {
+    public void extractPathWithParent(String variable, String parent, String attributePath, String valueToMatch) {
         connector.extract(variable, parent, attributePath, valueToMatch);
+    }
+
+    @Step({"Then extract <variable> where <attribute> is <value>", "And extract <path> where <attribute> is <value>"})
+    public void extractPath(String variable, String attributePath, String valueToMatch) {
+        connector.extract(variable, "", attributePath, valueToMatch);
     }
 
     private void compare(Object value, Consumer<Object[]> match) {
@@ -86,6 +95,24 @@ public class GaugeService {
         connector.verifyStatusCode(expected);
     }
 
+    @Step({"When getting <query> with <variables>", "And getting <query> with <variables>"})
+    public void gettingWithVariables(String query, Object parameters) {
+        if (parameters instanceof Table) {
+            Table table = (Table) parameters;
+            String getParameters = table.getTableRows().stream()
+                    .map(tableRow -> tableRow.getCell("name") + "=" + tableRow.getCell("value"))
+                    .collect(Collectors.joining("&"));
+            getWithParameters(query, getParameters);
+        }
+        else if(parameters instanceof String) {
+            getWithParameters(query, ((String) parameters).replaceAll("\\s+", "").replace(',','&'));
+        }
+    }
+
+    private void getWithParameters(String query, String variables) {
+        connector.getWithLogin(query, variables, loginHandler);
+    }
+
     @Step({"When posting <query> with <variables>", "And posting <query> with <variables>"})
     public void postingWithVariables(String query, Object variables) {
         if (variables instanceof String) {
@@ -120,7 +147,12 @@ public class GaugeService {
     @Step({"Then <path> is <value>", "And <path> is <value>",
             "Then <path> are <value>", "And <path> are <value>"})
     public void thenIs(String dataPath, Object value) {
-        compare(value, connector.thenIs(dataPath));
+        Object extractedCacheValue = getScenarioDataStore().get(dataPath);
+        if (extractedCacheValue != null) {
+            assertThat(extractedCacheValue.toString()).isEqualTo(value);
+        } else {
+            compare(value, connector.thenIs(dataPath));
+        }
     }
 
     @Step("Use <endpoint>")

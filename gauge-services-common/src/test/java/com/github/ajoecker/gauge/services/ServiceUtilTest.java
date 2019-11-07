@@ -60,7 +60,7 @@ public class ServiceUtilTest {
                 "        }\n" +
                 "    }\n" +
                 "}";
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:2", new Connector()), queryReplaced);
+        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=2", new Connector()), queryReplaced);
     }
 
     @Test
@@ -87,7 +87,7 @@ public class ServiceUtilTest {
                 return "##";
             }
         };
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:2", new Connector()), queryReplaced);
+        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=2", new Connector()), queryReplaced);
     }
 
     @Test
@@ -113,7 +113,7 @@ public class ServiceUtilTest {
 
         Connector connector = new Connector();
         connector.setPreviousResponse(re);
-        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size:%foo%", connector), queryReplaced);
+        Assertions.assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=%foo%", connector), queryReplaced);
     }
 
     @BeforeEach

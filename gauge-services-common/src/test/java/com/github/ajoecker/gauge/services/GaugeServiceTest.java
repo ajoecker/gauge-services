@@ -36,7 +36,7 @@ public class GaugeServiceTest {
         final String theQuery = "1234";
         Connector connector = new Connector() {
             @Override
-            public void getWithLogin(String query, LoginHandler loginHandler) {
+            public void getWithLogin(String query, String parameters, LoginHandler loginHandler) {
                 assertEquals(theQuery, query);
             }
         };
@@ -99,7 +99,7 @@ public class GaugeServiceTest {
                 );
             }
         };
-        String replacement = "foo:fooValue,bar:barValue";
+        String replacement = "foo=fooValue,bar=barValue";
         new GaugeService(connector, loginHandler).postingWithVariables("%foo% : %bar%", replacement);
     }
 
