@@ -1,8 +1,6 @@
 package com.github.ajoecker.gauge.services;
 
-import java.util.Optional;
-
-import static com.github.ajoecker.gauge.services.ServiceUtil.orDefault;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.orDefault;
 
 /**
  * Interface to define multiple configurations.

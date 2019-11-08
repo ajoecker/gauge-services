@@ -1,5 +1,7 @@
-package com.github.ajoecker.gauge.services;
+package com.github.ajoecker.gauge.services.gauge;
 
+import com.github.ajoecker.gauge.services.ConfigurationSource;
+import com.github.ajoecker.gauge.services.Connector;
 import com.google.common.base.Strings;
 import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
@@ -162,7 +164,7 @@ public final class ServiceUtil {
         return tableRow.getTableCells().stream().collect(Collectors.toMap(TableCell::getColumnName, TableCell::getValue));
     }
 
-    static List<String> splitIntoKeyValueList(String s) {
+    public static List<String> splitIntoKeyValueList(String s) {
         return Arrays.stream(s.split(configurationSource.separator()))
                 .flatMap(s1 -> Arrays.stream(s1.split(configurationSource.variableSeparator())))
                 .collect(Collectors.toList());

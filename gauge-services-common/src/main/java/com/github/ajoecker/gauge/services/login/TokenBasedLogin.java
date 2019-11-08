@@ -1,7 +1,6 @@
 package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
 
@@ -10,11 +9,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import static com.github.ajoecker.gauge.services.ServiceUtil.replaceVariablesInQuery;
-import static com.github.ajoecker.gauge.services.ServiceUtil.separator;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariablesInQuery;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.separator;
 import static java.nio.file.Files.readString;
 
 /**
@@ -48,7 +46,7 @@ public final class TokenBasedLogin extends AbstractLoginHandler {
 
     private String sendLoginQuery(Connector connector, UnaryOperator<String> queryMapper) {
         try {
-            connector.post(readQuery(queryMapper, connector.getVariableAccessor().tokenQueryFile()));
+            connector.post(readQuery(queryMapper, connector.getVariableAccessor().tokenQueryFile()), "");
             return connector.extract(connector.getVariableAccessor().tokenPath());
         } catch (URISyntaxException | IOException e) {
             throw new QueryException(e);

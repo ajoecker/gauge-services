@@ -1,5 +1,8 @@
-package com.github.ajoecker.gauge.services;
+package com.github.ajoecker.gauge.services.gauge;
 
+import com.github.ajoecker.gauge.services.ConfigurationSource;
+import com.github.ajoecker.gauge.services.Connector;
+import com.github.ajoecker.gauge.services.gauge.ServiceUtil;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Assertions;
@@ -7,13 +10,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import static com.github.ajoecker.gauge.services.ServiceUtil.isMap;
-import static com.github.ajoecker.gauge.services.ServiceUtil.splitIntoKeyValueList;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.isMap;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.splitIntoKeyValueList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

@@ -1,10 +1,9 @@
 package com.github.ajoecker.gauge.services;
 
+import com.github.ajoecker.gauge.services.gauge.ServiceUtil;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.google.common.base.Strings;
-import com.thoughtworks.gauge.datastore.DataStoreFactory;
 import io.restassured.http.ContentType;
-import io.restassured.path.json.JsonPath;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -13,9 +12,8 @@ import org.hamcrest.Matchers;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import static com.github.ajoecker.gauge.services.ServiceUtil.splitIntoKeyValueList;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.splitIntoKeyValueList;
 import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -55,15 +53,6 @@ public class Connector {
         this.endpoint = endpoint;
     }
 
-    /**
-     * Sends a post with the given query
-     *
-     * @param query the query
-     */
-    public void post(String query) {
-        post(query, "");
-    }
-
     public String extract(String path) {
         return response.then().extract().path(prefix(path));
     }
@@ -75,7 +64,7 @@ public class Connector {
      * @param variables the variables
      */
     public void post(String query, String variables) {
-        response = post(query, variables, startRequest());
+        response = post(query, variables, "", startRequest());
         setPreviousResponse();
     }
 
@@ -93,22 +82,11 @@ public class Connector {
      * Sends a post with the given query and ensures that one is authenticated.
      *
      * @param query        the query
-     * @param loginHandler the {@link LoginHandler} for authentication
-     */
-    public void postWithLogin(String query, LoginHandler loginHandler) {
-        response = post(query, "", login(loginHandler));
-        setPreviousResponse();
-    }
-
-    /**
-     * Sends a post with the given query and ensures that one is authenticated.
-     *
-     * @param query        the query
      * @param variables    the variables
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public void postWithLogin(String query, String variables, LoginHandler loginHandler) {
-        response = post(query, variables, login(loginHandler));
+    public void postWithLogin(String query, String variables, String path, LoginHandler loginHandler) {
+        response = post(query, variables, path, login(loginHandler));
         setPreviousResponse();
     }
 
@@ -116,7 +94,7 @@ public class Connector {
         setPreviousResponse(response.then().extract());
     }
 
-    void setPreviousResponse(ExtractableResponse<Response> previousResponse) {
+    public void setPreviousResponse(ExtractableResponse<Response> previousResponse) {
         this.previousResponse = Optional.ofNullable(previousResponse);
     }
 
@@ -164,9 +142,9 @@ public class Connector {
         setPreviousResponse();
     }
 
-    public void deleteWithLogin(String query, LoginHandler loginHandler) {
+    public void deleteWithLogin(String query, String path, LoginHandler loginHandler) {
         RequestSpecification request = login(loginHandler);
-        response = checkDebugPrint(request.delete(endpoint + "/" + query));
+        response = checkDebugPrint(request.delete(checkTrailingSlash(getCompleteEndpoint(path), query)));
         setPreviousResponse();
     }
 
@@ -185,11 +163,23 @@ public class Connector {
      * @param request the request
      * @return the {@link Response}
      */
-    private Response post(String query, String variables, RequestSpecification request) {
+    private Response post(String query, String variables, String path, RequestSpecification request) {
+        String postEndpoint = getCompleteEndpoint(path);
         return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
                 .body(bodyFor(query, variables))
                 .when()
-                .post(endpoint));
+                .post(postEndpoint));
+    }
+
+    private String getCompleteEndpoint(String path) {
+        return checkTrailingSlash(endpoint, path);
+    }
+
+    private String checkTrailingSlash(String base, String path) {
+        if (!Strings.isNullOrEmpty(path)) {
+            return !base.endsWith("/") ? base + "/" + path : base + path;
+        }
+        return base;
     }
 
     private Response checkDebugPrint(Response response) {
@@ -222,7 +212,7 @@ public class Connector {
      * @return the {@link Response}
      */
     private Response get(String query, String parameters, RequestSpecification request) {
-        String queryPath = endpoint + query;
+        String queryPath = getCompleteEndpoint(query);
         if (!Strings.isNullOrEmpty(parameters)) {
             queryPath = queryPath + "?" + parameters;
         }
