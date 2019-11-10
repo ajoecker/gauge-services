@@ -38,6 +38,6 @@ public class POST extends Service {
     }
 
     private void postWithVariables(String query, String path, String variables) {
-        connector.postWithLogin(query, variables, path, loginHandler);
+        connector.post(query, variables, path, loginHandler);
     }
 }

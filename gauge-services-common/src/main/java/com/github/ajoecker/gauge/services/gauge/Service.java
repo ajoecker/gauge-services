@@ -6,7 +6,7 @@ import com.github.ajoecker.gauge.services.login.LoginHandler;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The class provides the implementation of the gauge specs to validate different queries.
+ * An abstract base class for all different kind of service endpoints, such as POST, GET or DELETE.
  */
 public abstract class Service {
     protected final Connector connector;

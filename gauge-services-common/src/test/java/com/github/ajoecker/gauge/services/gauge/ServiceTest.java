@@ -22,7 +22,7 @@ public class ServiceTest {
         final String theQuery = "this is a theQuery";
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables, String path, LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals(query, query),
                         () -> assertEquals("", variables)
@@ -38,7 +38,7 @@ public class ServiceTest {
         final String theQuery = "1234";
         Connector connector = new Connector() {
             @Override
-            public void getWithLogin(String query, String parameters, LoginHandler loginHandler) {
+            public void get(String query, String parameters, LoginHandler loginHandler) {
                 assertEquals(theQuery, query);
             }
         };
@@ -63,7 +63,7 @@ public class ServiceTest {
     public void postWithVariablesAsTableNoReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables, String path, LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals("simple", query),
                         () -> assertEquals("", variables)
@@ -80,7 +80,7 @@ public class ServiceTest {
     public void postWithVariablesAsTableWithReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables, String path, LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals("fooValue : barValue", query),
                         () -> assertEquals("", variables)
@@ -98,7 +98,7 @@ public class ServiceTest {
     public void postWithVariablesAsStringWithReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables,String path,  LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals("fooValue : barValue", query),
                         () -> assertEquals("", variables)
@@ -115,7 +115,7 @@ public class ServiceTest {
     public void postWithVariablesAsMapWithReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables, String path, LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals("foo : bar", query),
                         () -> assertEquals("{foo:fooValue,bar:barValue}", variables)

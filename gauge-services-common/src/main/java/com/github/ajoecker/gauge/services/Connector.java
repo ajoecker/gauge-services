@@ -85,7 +85,7 @@ public class Connector {
      * @param variables    the variables
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public void postWithLogin(String query, String variables, String path, LoginHandler loginHandler) {
+    public void post(String query, String variables, String path, LoginHandler loginHandler) {
         response = post(query, variables, path, login(loginHandler));
         setPreviousResponse();
     }
@@ -130,7 +130,7 @@ public class Connector {
      * @param parameter    optional parameters of the query, empy string if non available
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public void getWithLogin(String query, String parameter, LoginHandler loginHandler) {
+    public void get(String query, String parameter, LoginHandler loginHandler) {
         String variable = ServiceUtil.extractPlaceholder(query);
         if (!Strings.isNullOrEmpty(variable)) {
             Object extractedValueFromCache = getScenarioDataStore().get(variable);

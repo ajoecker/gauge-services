@@ -19,12 +19,12 @@ public class GetTest {
         table.addRow(List.of("Alicia", "Spain"));
         Connector connector = new Connector() {
             @Override
-            public void getWithLogin(String query, String parameter, LoginHandler loginHandler) {
+            public void get(String query, String parameter, LoginHandler loginHandler) {
                 assertAll(() -> assertEquals("Hans=German&Alicia=Spain", parameter),
                         () -> assertEquals("foo", query));
             }
         };
         Registry.init(connector);
-        new GET().gettingWithVariables("foo", table);
+        new GET().gettingParameters("foo", table);
     }
 }
