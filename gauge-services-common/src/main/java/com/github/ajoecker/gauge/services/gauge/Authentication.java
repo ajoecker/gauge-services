@@ -4,7 +4,10 @@ import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.github.ajoecker.gauge.services.VariableAccessorDelegate;
 import com.thoughtworks.gauge.Step;
 
-public class Login extends Service {
+/**
+ * The class {@link Authentication} contains all steps for user authentication
+ */
+public class Authentication extends Service {
     @Step({"When <user> logs in with password <password>", "And <user> logs in with password <password>"})
     public void loginUserWithPassword(String user, String password) {
         loginHandler.loginWithGivenCredentials(user, password, connector);

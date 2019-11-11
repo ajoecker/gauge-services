@@ -5,8 +5,6 @@ import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
 
-import java.util.function.Supplier;
-
 /**
  * {@link LoginHandler} that works on basic authentication.
  * <p>

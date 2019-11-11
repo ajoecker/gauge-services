@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.*;
  * Abstraction of a connection to a service. This is the glue to connect and send to a service, e.g. GraphQL or REST
  */
 public class Connector {
+    public static final String NO_PREFIX = "";
     private String endpoint;
     private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
     private Response response;
@@ -83,6 +84,7 @@ public class Connector {
      *
      * @param query        the query
      * @param variables    the variables
+     * @param path         the path to post to
      * @param loginHandler the {@link LoginHandler} for authentication
      */
     public void post(String query, String variables, String path, LoginHandler loginHandler) {
@@ -106,7 +108,7 @@ public class Connector {
      * @return the prefix
      */
     protected String withPrefix() {
-        return "";
+        return NO_PREFIX;
     }
 
     /**
@@ -127,7 +129,7 @@ public class Connector {
      * Sends a get with the given query and ensures that one is authenticated.
      *
      * @param query        the query
-     * @param parameter    optional parameters of the query, empy string if non available
+     * @param parameter    optional parameters of the query, empty string if non available
      * @param loginHandler the {@link LoginHandler} for authentication
      */
     public void get(String query, String parameter, LoginHandler loginHandler) {
@@ -281,7 +283,7 @@ public class Connector {
         if (path instanceof List) {
             List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
             Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
-            first.ifPresentOrElse(f -> getScenarioDataStore().put(variable, f.get(variable)), () -> System.err.println("nothing found in " + theList));
+            first.ifPresent(f -> getScenarioDataStore().put(variable, f.get(variable)));
         }
     }
 

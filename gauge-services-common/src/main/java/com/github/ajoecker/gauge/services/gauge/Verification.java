@@ -14,7 +14,7 @@ import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataS
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.empty;
 
-public class Validation extends Service {
+public class Verification extends Service {
     @Step({"Then <path> contains <value>", "And <path> contains <value>"})
     public void thenContains(String dataPath, Object value) {
         compare(value, connector.thenContains(dataPath));

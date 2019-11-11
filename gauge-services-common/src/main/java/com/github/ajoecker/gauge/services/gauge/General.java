@@ -28,9 +28,10 @@ public class General extends Service {
     @Step({"When waiting for <seconds> s", "And waiting for <seconds> s"})
     public void sleep(int time) {
         try {
-            Thread.sleep(time * 1000);
+            Thread.sleep(time * 1000l);
         } catch (InterruptedException e) {
             // that is fine
+            Thread.currentThread().interrupt();
         }
     }
 

@@ -8,7 +8,7 @@ import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class LoginTest {
+public class AuthenticationTest {
     @Test
     public void onlyTokenGivenIsThenUsed() {
         VariableAccessor variableAccessor = new VariableAccessor() {
@@ -32,6 +32,6 @@ public class LoginTest {
             }
         };
         Registry.init(new Connector(variableAccessor), loginHandler);
-        new Login().loginWithToken("funny-token");
+        new Authentication().loginWithToken("funny-token");
     }
 }

@@ -5,6 +5,9 @@ import com.thoughtworks.gauge.Table;
 
 import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariablesInQuery;
 
+/**
+ * The class {@link POST} contains all steps for a POST request
+ */
 public class POST extends Service {
     @Step({"When posting <query>", "And posting <query>"})
     public void posting(String query) {
@@ -16,9 +19,9 @@ public class POST extends Service {
         postWithVariables(query, path, "");
     }
 
-    @Step({"When posting <query> with <variables>", "And posting <query> with <variables>"})
-    public void postingWithVariables(String query, Object variables) {
-        postingWithVariables(query, "", variables);
+    @Step({"When posting <query> with <parameters>", "And posting <query> with <parameters>"})
+    public void postingWithParameters(String query, Object parameters) {
+        postingWithVariables(query, "", parameters);
     }
 
     @Step({"When posting <query> to <path> with <variables>", "And posting <query> to <path> with <variables>"})

@@ -70,33 +70,6 @@ public class ServiceUtilTest {
     }
 
     @Test
-    public void replaceVariablesInQueryWithOwnFormat() {
-        String query = "{\n" +
-                "    popular_artists(size: ##size##) {\n" +
-                "        artists {\n" +
-                "            name\n" +
-                "            nationality\n" +
-                "        }\n" +
-                "    }\n" +
-                "}";
-        String queryReplaced = "{\n" +
-                "    popular_artists(size: 2) {\n" +
-                "        artists {\n" +
-                "            name\n" +
-                "            nationality\n" +
-                "        }\n" +
-                "    }\n" +
-                "}";
-        ServiceUtil.configurationSource = new ConfigurationSource() {
-            @Override
-            public String variableMask() {
-                return "##";
-            }
-        };
-        assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=2", new Connector()), queryReplaced);
-    }
-
-    @Test
     public void replaceVariablesInQueryWithVariablesWorks() {
         String query = "{\n" +
                 "    popular_artists(size: %size%) {\n" +

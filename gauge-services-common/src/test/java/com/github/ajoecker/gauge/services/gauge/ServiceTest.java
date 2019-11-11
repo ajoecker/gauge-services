@@ -2,10 +2,8 @@ package com.github.ajoecker.gauge.services.gauge;
 
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.Registry;
-import com.github.ajoecker.gauge.services.login.BasicAuthentication;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.thoughtworks.gauge.Table;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -73,7 +71,7 @@ public class ServiceTest {
         Table table = new Table(List.of("foo", "bar"));
         table.addRow(List.of("fooValue", "barValue"));
         Registry.init(connector);
-        new POST().postingWithVariables("simple", table);
+        new POST().postingWithVariables("simple", "", table);
     }
 
     @Test
@@ -91,7 +89,7 @@ public class ServiceTest {
         table.addRow(List.of("foo", "fooValue"));
         table.addRow(List.of("bar", "barValue"));
         Registry.init(connector);
-        new POST().postingWithVariables("%foo% : %bar%", table);
+        new POST().postingWithVariables("%foo% : %bar%", "", table);
     }
 
     @Test
@@ -107,7 +105,7 @@ public class ServiceTest {
         };
         String replacement = "foo=fooValue,bar=barValue";
         Registry.init(connector);
-        new POST().postingWithVariables("%foo% : %bar%", replacement);
+        new POST().postingWithVariables("%foo% : %bar%", "", replacement);
     }
 
     @Test
@@ -124,7 +122,7 @@ public class ServiceTest {
         };
         String replacement = "{foo:fooValue,bar:barValue}";
         Registry.init(connector);
-        new POST().postingWithVariables("foo : bar", replacement);
+        new POST().postingWithVariables("foo : bar", "", replacement);
     }
 
     @Test
@@ -147,7 +145,7 @@ public class ServiceTest {
             }
         };
         Registry.init(connector);
-        new Validation().thenContains("path", table);
+        new Verification().thenContains("path", table);
     }
 
     @Test
@@ -167,7 +165,7 @@ public class ServiceTest {
             }
         };
         Registry.init(connector);
-        new Validation().thenContains("path", map);
+        new Verification().thenContains("path", map);
     }
 
     @Test
@@ -187,6 +185,6 @@ public class ServiceTest {
             }
         };
         Registry.init(connector);
-        new Validation().thenContains("path", string);
+        new Verification().thenContains("path", string);
     }
 }
