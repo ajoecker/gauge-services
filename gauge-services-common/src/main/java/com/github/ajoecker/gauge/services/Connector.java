@@ -1,21 +1,20 @@
 package com.github.ajoecker.gauge.services;
 
+import com.github.ajoecker.gauge.services.gauge.ServiceUtil;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
-import io.restassured.path.json.JsonPath;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.splitIntoKeyValueList;
+import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -23,19 +22,27 @@ import static org.hamcrest.Matchers.*;
  * Abstraction of a connection to a service. This is the glue to connect and send to a service, e.g. GraphQL or REST
  */
 public class Connector {
+    public static final String NO_PREFIX = "";
     private String endpoint;
     private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
     private Response response;
     private VariableAccessor variableAccessor;
-    private Map<String, Object> valueCache = new HashMap<>();
 
     public Connector() {
         this(new VariableAccessor());
     }
 
     public Connector(VariableAccessor variableAccessor) {
-        this.variableAccessor = variableAccessor;
+        setVariableAccessor(variableAccessor);
         setEndpoint(variableAccessor.endpoint());
+    }
+
+    public void setVariableAccessor(VariableAccessor variableAccessor) {
+        this.variableAccessor = variableAccessor;
+    }
+
+    public VariableAccessor getVariableAccessor() {
+        return variableAccessor;
     }
 
     /**
@@ -44,19 +51,7 @@ public class Connector {
      * @param endpoint the endpoint
      */
     public void setEndpoint(String endpoint) {
-        if (endpoint != null && !endpoint.endsWith("/")) {
-            endpoint = endpoint + "/";
-        }
         this.endpoint = endpoint;
-    }
-
-    /**
-     * Sends a post with the given query
-     *
-     * @param query the query
-     */
-    public void post(String query) {
-        post(query, "");
     }
 
     public String extract(String path) {
@@ -70,7 +65,7 @@ public class Connector {
      * @param variables the variables
      */
     public void post(String query, String variables) {
-        response = post(query, variables, startRequest());
+        response = post(query, variables, "", startRequest());
         setPreviousResponse();
     }
 
@@ -78,21 +73,10 @@ public class Connector {
      * Sends a get with the given query
      *
      * @param query the query
+     * @return the response of the get query
      */
-    public void get(String query) {
-        response = get(query, startRequest());
-        setPreviousResponse();
-    }
-
-    /**
-     * Sends a post with the given query and ensures that one is authenticated.
-     *
-     * @param query        the query
-     * @param loginHandler the {@link LoginHandler} for authentication
-     */
-    public void postWithLogin(String query, LoginHandler loginHandler) {
-        response = post(query, "", login(loginHandler));
-        setPreviousResponse();
+    public final Response get(String query) {
+        return get(query, "", startRequest());
     }
 
     /**
@@ -100,10 +84,11 @@ public class Connector {
      *
      * @param query        the query
      * @param variables    the variables
+     * @param path         the path to post to
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public void postWithLogin(String query, String variables, LoginHandler loginHandler) {
-        response = post(query, variables, login(loginHandler));
+    public void post(String query, String variables, String path, LoginHandler loginHandler) {
+        response = post(query, variables, path, login(loginHandler));
         setPreviousResponse();
     }
 
@@ -111,7 +96,7 @@ public class Connector {
         setPreviousResponse(response.then().extract());
     }
 
-    void setPreviousResponse(ExtractableResponse<Response> previousResponse) {
+    public void setPreviousResponse(ExtractableResponse<Response> previousResponse) {
         this.previousResponse = Optional.ofNullable(previousResponse);
     }
 
@@ -123,7 +108,7 @@ public class Connector {
      * @return the prefix
      */
     protected String withPrefix() {
-        return "";
+        return NO_PREFIX;
     }
 
     /**
@@ -144,14 +129,24 @@ public class Connector {
      * Sends a get with the given query and ensures that one is authenticated.
      *
      * @param query        the query
+     * @param parameter    optional parameters of the query, empty string if non available
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public void getWithLogin(String query, LoginHandler loginHandler) {
+    public void get(String query, String parameter, LoginHandler loginHandler) {
         String variable = ServiceUtil.extractPlaceholder(query);
-        if (!Strings.isNullOrEmpty(variable) && valueCache.containsKey(variable)) {
-            query = ServiceUtil.replaceMasked(query, valueCache.get(variable).toString());
+        if (!Strings.isNullOrEmpty(variable)) {
+            Object extractedValueFromCache = getScenarioDataStore().get(variable);
+            if (extractedValueFromCache != null) {
+                query = ServiceUtil.replaceMasked(query, extractedValueFromCache.toString());
+            }
         }
-        response = get(query, login(loginHandler));
+        response = get(query, parameter, login(loginHandler));
+        setPreviousResponse();
+    }
+
+    public void deleteWithLogin(String query, String path, LoginHandler loginHandler) {
+        RequestSpecification request = login(loginHandler);
+        response = checkDebugPrint(request.delete(checkTrailingSlash(getCompleteEndpoint(path), query)));
         setPreviousResponse();
     }
 
@@ -170,11 +165,23 @@ public class Connector {
      * @param request the request
      * @return the {@link Response}
      */
-    private Response post(String query, String variables, RequestSpecification request) {
+    private Response post(String query, String variables, String path, RequestSpecification request) {
+        String postEndpoint = getCompleteEndpoint(path);
         return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
                 .body(bodyFor(query, variables))
                 .when()
-                .post(endpoint));
+                .post(postEndpoint));
+    }
+
+    private String getCompleteEndpoint(String path) {
+        return checkTrailingSlash(endpoint, path);
+    }
+
+    private String checkTrailingSlash(String base, String path) {
+        if (!Strings.isNullOrEmpty(path)) {
+            return !base.endsWith("/") ? base + "/" + path : base + path;
+        }
+        return base;
     }
 
     private Response checkDebugPrint(Response response) {
@@ -206,10 +213,14 @@ public class Connector {
      * @param request the request
      * @return the {@link Response}
      */
-    private Response get(String query, RequestSpecification request) {
+    private Response get(String query, String parameters, RequestSpecification request) {
+        String queryPath = getCompleteEndpoint(query);
+        if (!Strings.isNullOrEmpty(parameters)) {
+            queryPath = queryPath + "?" + parameters;
+        }
         return checkDebugPrint(request.contentType(ContentType.JSON)
                 .when()
-                .get(endpoint + query));
+                .get(queryPath));
     }
 
     private RequestSpecification startRequest() {
@@ -240,7 +251,6 @@ public class Connector {
 
     public void clear() {
         previousResponse = Optional.empty();
-        valueCache = new HashMap<>();
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
@@ -267,12 +277,23 @@ public class Connector {
         response.then().time(Matchers.lessThanOrEqualTo(timeout));
     }
 
-    public void extract(String variable, String parent, String attribute, String valueToMatch) {
+    public void extract(String variable, String parent, String attributeValue) {
+        List<String> keyValueList = splitIntoKeyValueList(attributeValue);
         Object path = response.then().extract().path(parent);
         if (path instanceof List) {
             List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
-            Optional<Map<Object, Object>> first = theList.stream().filter(map -> map.get(attribute).equals(valueToMatch)).findFirst();
-            first.ifPresentOrElse(f -> valueCache.put(variable, f.get(variable)), () -> System.out.println("nothing found in " + theList));
+            Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
+            first.ifPresent(f -> getScenarioDataStore().put(variable, f.get(variable)));
         }
+    }
+
+    private boolean matches(Map<Object, Object> target, List<String> keyValues) {
+        Iterator<String> iterator = keyValues.iterator();
+        while (iterator.hasNext()) {
+            if (!target.get(iterator.next()).equals(iterator.next())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

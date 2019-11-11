@@ -1,10 +1,13 @@
-package com.github.ajoecker.gauge.services;
+package com.github.ajoecker.gauge.services.gauge;
 
+import com.github.ajoecker.gauge.services.ConfigurationSource;
+import com.github.ajoecker.gauge.services.Connector;
 import com.google.common.base.Strings;
 import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
 import com.thoughtworks.gauge.TableRow;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,6 +32,13 @@ public final class ServiceUtil {
         // utility class --> static
     }
 
+    /**
+     * Returns the system environment variable of the given key or the default value if the key does not exists
+     *
+     * @param envKey       the environment key
+     * @param defaultValue the fall back value
+     * @return the environment value or default value
+     */
     public static String orDefault(String envKey, String defaultValue) {
         String envValue = System.getenv(envKey);
         return Strings.isNullOrEmpty(envValue) ? defaultValue : envValue;
@@ -55,7 +65,7 @@ public final class ServiceUtil {
     public static String replaceVariablesInQuery(String query, String variables, Connector connector) {
         String[] split = split(variables);
         for (String s : split) {
-            String[] keyValue = s.split(configurationSource.variableSeparator());
+            String[] keyValue = s.split("=");
             String replacement = extractReplacement(keyValue[1], connector);
             query = doReplace(query, keyValue[0], replacement);
         }
@@ -98,14 +108,27 @@ public final class ServiceUtil {
         return query;
     }
 
+    /**
+     * Replaces all masked values in the given query by the new value
+     *
+     * @param query    the query containing masked value
+     * @param newValue the value to replace
+     * @return the query with the new value
+     */
     public static String replaceMasked(String query, String newValue) {
-        return query.replaceAll(configurationSource.variableMask() + ".+" + configurationSource.variableMask(), newValue);
+        return query.replaceAll("%.+%", newValue);
     }
 
+    /**
+     * Extracts the variable of query
+     *
+     * @param query the query
+     * @return the variable
+     */
     public static String extractPlaceholder(String query) {
-        int indexOf = query.indexOf(configurationSource.variableMask());
+        int indexOf = query.indexOf('%');
         if (indexOf > 0) {
-            return query.substring(indexOf + 1, query.indexOf(configurationSource.variableMask(), indexOf + 1));
+            return query.substring(indexOf + 1, query.indexOf('%', indexOf + 1));
         }
         return "";
     }
@@ -159,5 +182,11 @@ public final class ServiceUtil {
      */
     static Map<String, String> fromTable(TableRow tableRow) {
         return tableRow.getTableCells().stream().collect(Collectors.toMap(TableCell::getColumnName, TableCell::getValue));
+    }
+
+    public static List<String> splitIntoKeyValueList(String s) {
+        return Arrays.stream(s.split(configurationSource.separator()))
+                .flatMap(s1 -> Arrays.stream(s1.split("=")))
+                .collect(Collectors.toList());
     }
 }

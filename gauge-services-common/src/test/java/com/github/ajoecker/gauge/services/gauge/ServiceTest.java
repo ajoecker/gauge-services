@@ -1,6 +1,7 @@
-package com.github.ajoecker.gauge.services;
+package com.github.ajoecker.gauge.services.gauge;
 
-import com.github.ajoecker.gauge.services.login.BasicAuthentication;
+import com.github.ajoecker.gauge.services.Connector;
+import com.github.ajoecker.gauge.services.Registry;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.thoughtworks.gauge.Table;
 import org.junit.jupiter.api.Disabled;
@@ -13,22 +14,21 @@ import java.util.function.Consumer;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class GaugeServiceTest {
-    BasicAuthentication loginHandler = new BasicAuthentication(new VariableAccessor());
-
+public class ServiceTest {
     @Test
     public void postWithoutVariablesArePassedToConnector() {
         final String theQuery = "this is a theQuery";
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables, LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals(query, query),
                         () -> assertEquals("", variables)
                 );
             }
         };
-        new GaugeService(connector, loginHandler).posting(theQuery);
+        Registry.init(connector);
+        new POST().posting(theQuery);
     }
 
     @Test
@@ -36,11 +36,12 @@ public class GaugeServiceTest {
         final String theQuery = "1234";
         Connector connector = new Connector() {
             @Override
-            public void getWithLogin(String query, LoginHandler loginHandler) {
+            public void get(String query, String parameters, LoginHandler loginHandler) {
                 assertEquals(theQuery, query);
             }
         };
-        new GaugeService(connector, loginHandler).get(theQuery);
+        Registry.init(connector);
+        new GET().get(theQuery);
     }
 
     @Test
@@ -52,14 +53,15 @@ public class GaugeServiceTest {
                 assertEquals(code, expected);
             }
         };
-        new GaugeService(connector, loginHandler).verifyStatusCode(code);
+        Registry.init(connector);
+        new General().verifyStatusCode(code);
     }
 
     @Test
     public void postWithVariablesAsTableNoReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables, LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals("simple", query),
                         () -> assertEquals("", variables)
@@ -68,14 +70,15 @@ public class GaugeServiceTest {
         };
         Table table = new Table(List.of("foo", "bar"));
         table.addRow(List.of("fooValue", "barValue"));
-        new GaugeService(connector, loginHandler).postingWithVariables("simple", table);
+        Registry.init(connector);
+        new POST().postingWithVariables("simple", "", table);
     }
 
     @Test
     public void postWithVariablesAsTableWithReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables, LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals("fooValue : barValue", query),
                         () -> assertEquals("", variables)
@@ -85,22 +88,24 @@ public class GaugeServiceTest {
         Table table = new Table(List.of("name", "value"));
         table.addRow(List.of("foo", "fooValue"));
         table.addRow(List.of("bar", "barValue"));
-        new GaugeService(connector, loginHandler).postingWithVariables("%foo% : %bar%", table);
+        Registry.init(connector);
+        new POST().postingWithVariables("%foo% : %bar%", "", table);
     }
 
     @Test
     public void postWithVariablesAsStringWithReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables, LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals("fooValue : barValue", query),
                         () -> assertEquals("", variables)
                 );
             }
         };
-        String replacement = "foo:fooValue,bar:barValue";
-        new GaugeService(connector, loginHandler).postingWithVariables("%foo% : %bar%", replacement);
+        String replacement = "foo=fooValue,bar=barValue";
+        Registry.init(connector);
+        new POST().postingWithVariables("%foo% : %bar%", "", replacement);
     }
 
     @Test
@@ -108,7 +113,7 @@ public class GaugeServiceTest {
     public void postWithVariablesAsMapWithReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void postWithLogin(String query, String variables, LoginHandler loginHandler) {
+            public void post(String query, String variables, String path, LoginHandler loginHandler) {
                 assertAll(
                         () -> assertEquals("foo : bar", query),
                         () -> assertEquals("{foo:fooValue,bar:barValue}", variables)
@@ -116,7 +121,8 @@ public class GaugeServiceTest {
             }
         };
         String replacement = "{foo:fooValue,bar:barValue}";
-        new GaugeService(connector, loginHandler).postingWithVariables("foo : bar", replacement);
+        Registry.init(connector);
+        new POST().postingWithVariables("foo : bar", "", replacement);
     }
 
     @Test
@@ -138,7 +144,8 @@ public class GaugeServiceTest {
                 return consumer;
             }
         };
-        new GaugeService(connector, loginHandler).thenContains("path", table);
+        Registry.init(connector);
+        new Verification().thenContains("path", table);
     }
 
     @Test
@@ -146,7 +153,7 @@ public class GaugeServiceTest {
         String map = "{name: Hans, nationality: German}, {name: Alicia, nationality: Spain}";
         Consumer<Object[]> consumer = objects -> {
             assertAll(
-                    () -> assertEquals(2, objects.length ),
+                    () -> assertEquals(2, objects.length),
                     () -> assertEquals(objects[0], Map.of("nationality", "German", "name", "Hans")),
                     () -> assertEquals(objects[1], Map.of("nationality", "Spain", "name", "Alicia"))
             );
@@ -157,7 +164,8 @@ public class GaugeServiceTest {
                 return consumer;
             }
         };
-        new GaugeService(connector, loginHandler).thenContains("path", map);
+        Registry.init(connector);
+        new Verification().thenContains("path", map);
     }
 
     @Test
@@ -176,6 +184,7 @@ public class GaugeServiceTest {
                 return consumer;
             }
         };
-        new GaugeService(connector, loginHandler).thenContains("path", string);
+        Registry.init(connector);
+        new Verification().thenContains("path", string);
     }
 }

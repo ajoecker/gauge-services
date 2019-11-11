@@ -11,15 +11,9 @@ import io.restassured.specification.RequestSpecification;
  * It retrieves user and password information from the environment variables
  * <code>gauge.service.user</code> and <code>gauge.service.password</code>.
  */
-public class BasicAuthentication implements LoginHandler {
+public class BasicAuthentication extends AbstractLoginHandler {
     private String user;
     private String password;
-    private String token;
-    private VariableAccessor variableAccessor;
-
-    public BasicAuthentication(VariableAccessor variableAccessor) {
-        this.variableAccessor = variableAccessor;
-    }
 
     @Override
     public void setLogin(RequestSpecification request) {
@@ -27,7 +21,7 @@ public class BasicAuthentication implements LoginHandler {
             request.auth().preemptive().basic(user, password);
         }
         else if (!Strings.isNullOrEmpty(token)) {
-            request.header("Authorization", token);
+            request.header("Authorization", "Basic " + token);
         }
     }
 
@@ -39,6 +33,7 @@ public class BasicAuthentication implements LoginHandler {
 
     @Override
     public void loginWithSystemCredentials(Connector connector) {
+        VariableAccessor variableAccessor = connector.getVariableAccessor();
         this.user = variableAccessor.user();
         this.password = variableAccessor.password();
         this.token = variableAccessor.token();

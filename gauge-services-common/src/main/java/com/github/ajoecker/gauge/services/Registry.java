@@ -4,7 +4,7 @@ import com.github.ajoecker.gauge.services.login.BasicAuthentication;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.github.ajoecker.gauge.services.login.TokenBasedLogin;
 
-import static com.github.ajoecker.gauge.services.ServiceUtil.orDefault;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.orDefault;
 
 public final class Registry {
     public enum LoginType {
@@ -19,31 +19,32 @@ public final class Registry {
     }
 
     public static void init(Connector connector) {
-        Registry.connector = connector;
-        setLoginHandler(orDefault("gauge.service.loginhandler", LoginType.BASIC.toString()));
+        init(connector, getLoginHandler(orDefault("gauge.service.loginhandler", LoginType.BASIC.toString())));
     }
 
-    static Connector getConnector() {
+    public static void init(Connector connector, LoginHandler loginHandler) {
+        Registry.connector = connector;
+        Registry.loginHandler = loginHandler;
+    }
+
+    public static Connector getConnector() {
         return connector;
     }
 
-    static LoginHandler getLoginHandler() {
+    public static LoginHandler getLoginHandler() {
         return loginHandler;
     }
 
-    private static void setLoginHandler(String type) {
+    private static LoginHandler getLoginHandler(String type) {
         switch (LoginType.valueOf(type.toUpperCase())) {
             case BASIC:
-                loginHandler = new BasicAuthentication(new VariableAccessor());
-                return;
+                return new BasicAuthentication();
 
             case TOKEN:
-                loginHandler = new TokenBasedLogin(new VariableAccessor());
-                return;
+                return new TokenBasedLogin();
 
             default:
                 throw new IllegalArgumentException("unknown type for login: " + type);
-
         }
     }
 }
