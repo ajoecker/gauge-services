@@ -6,6 +6,7 @@ import com.google.common.base.Strings;
 import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
 import com.thoughtworks.gauge.TableRow;
+import com.thoughtworks.gauge.datastore.DataStoreFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -66,24 +67,46 @@ public final class ServiceUtil {
         String[] split = split(variables);
         for (String s : split) {
             String[] keyValue = s.split("=");
-            String replacement = extractReplacement(keyValue[1], connector);
+            String replacement = replace(keyValue[1], connector);
             query = doReplace(query, keyValue[0], replacement);
         }
         return query;
     }
 
-    private static String extractReplacement(String replacement, Connector connector) {
-        if (connector.hasPreviousResponse() && configurationSource.isMasked(replacement)) {
-            return extractPathFromPreviousRequest(replacement, connector);
+    /**
+     * Checks whether the given string is masked and therefore needs to be replaced. If not, the value is returned.
+     * <p>
+     * If it is masked, it first checks the {@link DataStoreFactory#getScenarioDataStore()} for an existing key and returns
+     * the value of the key, if existing.
+     * <p>
+     * If not, it checks whether a previous response has been done and the key can be found there and returns the value,
+     * if existing
+     *
+     * @param keyValue  the key
+     * @param connector the {@link Connector}
+     * @return an actual value
+     */
+    public static String replace(String keyValue, Connector connector) {
+        if (configurationSource.isMasked(keyValue)) {
+            String toLookFor = configurationSource.unmask(keyValue);
+            Object saved = DataStoreFactory.getScenarioDataStore().get(toLookFor);
+            if (saved != null) {
+                return saved.toString();
+            }
+            if (connector.hasPreviousResponse()) {
+                String prev = extractPathFromPreviousRequest(toLookFor, connector);
+                if (!Strings.isNullOrEmpty(prev)) {
+                    return prev;
+                }
+            }
         }
-        return replacement;
+        return keyValue;
     }
 
-    private static String extractPathFromPreviousRequest(String replacement, Connector connector) {
-        String variablePath = configurationSource.unmask(replacement);
-        Object path = connector.pathFromPreviousResponse(variablePath);
+    private static String extractPathFromPreviousRequest(String toLookFor, Connector connector) {
+        Object path = connector.pathFromPreviousResponse(toLookFor);
         if (path instanceof List) {
-            throw new IllegalArgumentException("variable path " + variablePath + " is not a single value, but a list: " + path);
+            throw new IllegalArgumentException("variable path " + toLookFor + " is not a single value, but a list: " + path);
         }
         return path.toString();
     }
@@ -103,7 +126,7 @@ public final class ServiceUtil {
     public static String replaceVariablesInQuery(String query, Table variables, Connector connector) {
         List<TableRow> tableRows = variables.getTableRows();
         for (TableRow row : tableRows) {
-            query = doReplace(query, row.getCell("name"), extractReplacement(row.getCell("value"), connector));
+            query = doReplace(query, row.getCell("name"), replace(row.getCell("value"), connector));
         }
         return query;
     }

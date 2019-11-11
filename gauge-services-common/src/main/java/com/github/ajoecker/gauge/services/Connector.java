@@ -13,7 +13,7 @@ import org.hamcrest.Matchers;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.splitIntoKeyValueList;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.*;
 import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -146,7 +146,8 @@ public class Connector {
 
     public void deleteWithLogin(String query, String path, LoginHandler loginHandler) {
         RequestSpecification request = login(loginHandler);
-        response = checkDebugPrint(request.delete(checkTrailingSlash(getCompleteEndpoint(path), query)));
+        String realQuery = replace(query, this);
+        response = checkDebugPrint(request.delete(checkTrailingSlash(getCompleteEndpoint(path), realQuery)));
         setPreviousResponse();
     }
 
@@ -167,8 +168,9 @@ public class Connector {
      */
     private Response post(String query, String variables, String path, RequestSpecification request) {
         String postEndpoint = getCompleteEndpoint(path);
+        Object object = bodyFor(query, variables);
         return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
-                .body(bodyFor(query, variables))
+                .body(object)
                 .when()
                 .post(postEndpoint));
     }
@@ -290,7 +292,9 @@ public class Connector {
     private boolean matches(Map<Object, Object> target, List<String> keyValues) {
         Iterator<String> iterator = keyValues.iterator();
         while (iterator.hasNext()) {
-            if (!target.get(iterator.next()).equals(iterator.next())) {
+            String key = iterator.next();
+            String value = iterator.next();
+            if (!target.get(key).equals(replace(value, this))) {
                 return false;
             }
         }
