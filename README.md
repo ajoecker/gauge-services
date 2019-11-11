@@ -28,13 +28,13 @@ To use the library in a project simply put the following in the `pom.xml`
 <dependency>  
  <groupId>com.github.ajoecker</groupId>
  <artifactId>gauge-graphql</artifactId>
- <version>0.3.1-SNAPSHOT</version>
+ <version>0.3.3-SNAPSHOT</version>
  <scope>test</scope>
 </dependency>  
 ```
 #### Gradle
 ```
-testCompile 'com.github.ajoecker:gauge-graphql:0.3.1-SNAPSHOT'
+testCompile 'com.github.ajoecker:gauge-graphql:0.3.3-SNAPSHOT'
 ```
 
 ### REST 
@@ -44,7 +44,7 @@ To use the library in a project simply put the following in the `pom.xml`
 <dependency>  
  <groupId>com.github.ajoecker</groupId>
  <artifactId>gauge-rest</artifactId>
- <version>0.3.1-SNAPSHOT</version>
+ <version>0.3.3-SNAPSHOT</version>
  <scope>test</scope>
 </dependency>  
 ```
@@ -52,7 +52,7 @@ To use the library in a project simply put the following in the `pom.xml`
 
 #### Gradle
 ```
-testCompile 'com.github.ajoecker:gauge-rest:0.3.1-SNAPSHOT'
+testCompile 'com.github.ajoecker:gauge-rest:0.3.3-SNAPSHOT'
 ```
 ## Examples
 The project [gauge-service-examples](https://github.com/ajoecker/gauge-services-examples) shows some examples of the usage.
@@ -339,6 +339,41 @@ for the latter the input would look like this:
   }
 }
 ```
+
+#### Variables
+One can define variables, that can be referenced inside the scenario
+
+* Set a variable to a fixed value
+```
+* Set <variable> to <value>
+```
+* Create a unique value (string) of length 8
+```
+* Create <variable>
+```
+* Create a unique value (string) of custom length (max 36 characters long)
+```
+* Create <variable> with length
+```
+A defined variable can be referenced inside the scenario with `%`
+```
+
+## Comments with id and table
+* Given the endpoint "https://jsonplaceholder.typicode.com/"
+* Set "email" to "Nikita@garfield.biz"
+* When getting "comments" with
+
+   |name  |value|
+   |------|-----|
+   |postId|1    |
+* And extracting "id" where "email=%email%"
+* Then "id" is "3"
+```
+In this case, the variable `%email%` will be replaced with the defined value `Nikita@garfield.biz`.
+
+**Attention**
+Values are first replaced from a defined variable in the scenario and then from a previous response.
+This means if a variable is defined in the scenario and from a previous responds, the first is taken.
 
 ## Configuration
 In the Gauge environment the following keys are recognized

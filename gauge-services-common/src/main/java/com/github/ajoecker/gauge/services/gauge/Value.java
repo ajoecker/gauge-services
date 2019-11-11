@@ -15,6 +15,7 @@ import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataS
 public class Value extends Service {
     @Step("Create <variable> with length <length>")
     public void createUniqueId(String variable, int length) {
+        length = length > 36 ? 36 : length;
         String unique = UUID.randomUUID().toString().substring(0, length);
         getScenarioDataStore().put(variable, unique);
     }
@@ -27,5 +28,12 @@ public class Value extends Service {
     @Step("Set <variable> to <value>")
     public void setVariable(String variable, Object value) {
         getScenarioDataStore().put(variable, value);
+    }
+
+    public static void main(String[] args) {
+        for (int i=0; i<10; i++) {
+            UUID uuid = UUID.randomUUID();
+            System.out.println(uuid.toString().length());
+        }
     }
 }
