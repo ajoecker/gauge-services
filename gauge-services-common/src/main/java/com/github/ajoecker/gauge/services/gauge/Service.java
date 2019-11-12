@@ -3,6 +3,11 @@ package com.github.ajoecker.gauge.services.gauge;
 import com.github.ajoecker.gauge.services.*;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

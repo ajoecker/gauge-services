@@ -84,7 +84,7 @@ To verify that a request took maximal of time, one can use one of the following
 * And the request finished in less than <timeout> s
 ```
 for example
-```$xslt
+```
 * Then the request finished in less than "2" s
 ```
 #### Status code
@@ -94,7 +94,7 @@ To verify a status code
 * And status code is <code>
 ```
 for exaomple
-```$xslt
+```
 * And status code is "200"
 ```
 #### Authentication
@@ -102,7 +102,7 @@ The library supports Basic Authentication via user / password combination, via b
 to receive a token for succeeding queries. 
 
 Simple Basic Authentication with a user and password
-```$xslt
+```
 * When <user> logs in with password <password>
 * And <user> logs in with password <password>
 ```
@@ -112,25 +112,25 @@ In case the authentication information is stored in the [Configuration](#Configu
 * And user logs in
 ```
 For an existing token
-```$xslt
+```
 * When user logs in with <token>
 * And user logs in with <token>
 ```
 #### GET
 To send a GET request the following can be used
-```$xslt
+```
 * When getting <resource>
 * And getting <resource>
 ```
 For sending parameters with the query
-```$xslt
+```
 * When getting <query> with <parameters>
 * And getting <query> with <parameters>
 ```
 whereas the parameters can either be a string or a gauge table
 
 for example
-```$xslt
+```
 * When getting "comments" with 
 
    |name  |value|
@@ -144,14 +144,14 @@ For multiple parameters one can either use multiple rows in the table or a `,` s
 To send a POST request, the following can be used:
 
 * To simple post a query to the current endpoint
-```$xslt
+```
 * When posting <query>
 * And posting <query>
 ```
 whereas the `<query>` is a file containing the actual query.
 
 for example
-```$xslt
+```
 * Given the endpoint "https://api.predic8.de:443/shop/products/"
 * When posting <file:src/test/resources/wildberries.json>
 * Then "name" is "Wildberries Wild"
@@ -159,7 +159,7 @@ for example
 the `file` parameter gives the full path to the query file relative to the project (or with `/` as an absolute path to the file).
 
 In the example the `wildberries.json` looks like this
-```$xslt
+```
 {
   "name": "Wildberries Wild",
   "price": 10.99,
@@ -169,26 +169,26 @@ In the example the `wildberries.json` looks like this
 ```
 
 * To post a query to a certain path
-```$xslt
+```
 * When posting <query> to <path>
 * And posting <query> to <path>
 ```
 This allows to define a common endpoint and post to different paths.
 
 with the example above, one could rewrite it to 
-```$xslt
+```
 * Given the endpoint "https://api.predic8.de:443"
 * When posting <file:src/test/resources/wildberries.json> to "shop/products"
 * Then "name" is "Wildberries Wild"
 ```
 
 * To post a query with parameters
-```$xslt
+```
 * When posting <query> with <parameters> 
 * And posting <query> with <parameters>
 ```
 for example
-```$xslt
+```
 * When posting <file:src/test/resources/popular_artists_variable.graphql> with 
 
    |name|value|
@@ -200,12 +200,12 @@ This can also be combined then with the posting a query to a certain path.
 
 #### Exracting results
 Any result can be extracted into a variable by defining the parent element and a matcher to find the variable
-```$xslt
+```
 * Then extracting <variable> from <parent> where <attribute>
 * And extracting <variable> from <parent> where <attribute>
 ```
 In case no parent element is required
-```$xslt
+```
 * Then extracting <variable> where <attribute>"
 * And extracting <variable> where <attribute>
 ```
@@ -213,14 +213,14 @@ In case no parent element is required
 this can be used to 
 
 * verify the value of the variable
-```$xslt
+```
 * Use "https://jsonplaceholder.typicode.com/"
 * When getting "comments" with "postId=1"
 * And extracting "id" where "email=Nikita@garfield.biz"
 * Then "id" is "3"
 ```
 * use it for a succeeding call
-```$xslt
+```
 * And extracting "id" from "cases" where "last_name=Vetinari,first_name=Havelock"
 * When getting "cases/%id%"
 ``` 
@@ -229,22 +229,22 @@ this can be used to
 To verify a response
 
 ##### contains
-```$xslt
+```
 Then <path> contains <value>", "And <path> contains <value>
 ```
 asserts that the given path contains the given value, for example
-```$xslt
+```
 ## popular artists
 * When posting <file:src/test/resources/popular_artists.graphql>
 * Then "popular_artists.artists.name" contains "Pablo Picasso, Banksy"
 ```
 similar to examples above the expected values can be given as string or gauge table
 ##### is
-```$xslt
+```
 Then <path> is <value>", "And <path> is <value>
 ```
 asserts that the given path contains the given value, for example
-```$xslt
+```
 ## popular artists is matching with table
 * When posting <file:src/test/resources/popular_artists.graphql>
 * Then "popular_artists.artists" is 
@@ -255,7 +255,7 @@ asserts that the given path contains the given value, for example
    |Banksy       |British    |
 ```
 ##### is empty
-```$xslt
+```
 * When getting "zipcode/any_invalid_zipcode"
 * Then "city.name" is empty
 ```
@@ -339,42 +339,27 @@ for the latter the input would look like this:
   }
 }
 ```
+## Referencing Variables
+Variables can be defined via the steps provided from [https://github.com/ajoecker/gauge-random-data](https://github.com/ajoecker/gauge-random-data).
 
-#### Variables
-One can define variables, that can be referenced inside the scenario
+A defined variable can be referenced inside a scenario with `%`
 
-* Set a variable to a fixed value
+for example:
 ```
-* Set <variable> to <value>
-```
-* Create a unique value (string) of length 8
-```
-* Create <variable>
-```
-* Create a unique value (string) of custom length (max 36 characters long)
-```
-* Create <variable> with length
-```
-A defined variable can be referenced inside the scenario with `%`
-```
-
 ## Comments with id and table
 * Given the endpoint "https://jsonplaceholder.typicode.com/"
 * Set "email" to "Nikita@garfield.biz"
-* When getting "comments" with
-
-   |name  |value|
-   |------|-----|
-   |postId|1    |
+* When getting "comments" with "postId=1"
 * And extracting "id" where "email=%email%"
 * Then "id" is "3"
 ```
 In this case, the variable `%email%` will be replaced with the defined value `Nikita@garfield.biz`.
 
 **Attention**
+
 Values are first replaced from a defined variable in the scenario and then from a previous response.
 This means if a variable is defined in the scenario and from a previous responds, the first is taken.
-
+    
 ## Configuration
 In the Gauge environment the following keys are recognized
  
