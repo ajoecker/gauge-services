@@ -28,13 +28,13 @@ To use the library in a project simply put the following in the `pom.xml`
 <dependency>  
  <groupId>com.github.ajoecker</groupId>
  <artifactId>gauge-graphql</artifactId>
- <version>0.3.3-SNAPSHOT</version>
+ <version>0.3.3</version>
  <scope>test</scope>
 </dependency>  
 ```
 #### Gradle
 ```
-testCompile 'com.github.ajoecker:gauge-graphql:0.3.3-SNAPSHOT'
+testCompile 'com.github.ajoecker:gauge-graphql:0.3.3'
 ```
 
 ### REST 
@@ -44,7 +44,7 @@ To use the library in a project simply put the following in the `pom.xml`
 <dependency>  
  <groupId>com.github.ajoecker</groupId>
  <artifactId>gauge-rest</artifactId>
- <version>0.3.3-SNAPSHOT</version>
+ <version>0.3.3</version>
  <scope>test</scope>
 </dependency>  
 ```
@@ -52,7 +52,7 @@ To use the library in a project simply put the following in the `pom.xml`
 
 #### Gradle
 ```
-testCompile 'com.github.ajoecker:gauge-rest:0.3.3-SNAPSHOT'
+testCompile 'com.github.ajoecker:gauge-rest:0.3.3'
 ```
 ## Examples
 The project [gauge-service-examples](https://github.com/ajoecker/gauge-services-examples) shows some examples of the usage.
