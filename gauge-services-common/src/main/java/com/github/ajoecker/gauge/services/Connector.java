@@ -129,7 +129,7 @@ public class Connector {
     /**
      * Sends a get with the given query and ensures that one is authenticated.
      *
-     * @param resource        the query
+     * @param resource     the query
      * @param parameter    optional parameters of the query, empty string if non available
      * @param loginHandler the {@link LoginHandler} for authentication
      */
@@ -139,18 +139,6 @@ public class Connector {
         setPreviousResponse();
     }
 
-    /**
-     * Sends a get with the given query and ensures that one is authenticated.
-     *
-     * @param resource        the query
-     * @param parameter    optional parameters of the query, empty string if non available
-     * @param loginHandler the {@link LoginHandler} for authentication
-     */
-    public void put(String resource, String parameter, LoginHandler loginHandler) {
-        resource = replaceVariables(resource, this);
-        response = get(resource, parameter, login(loginHandler));
-        setPreviousResponse();
-    }
 
     public void deleteWithLogin(String query, String path, LoginHandler loginHandler) {
         RequestSpecification request = login(loginHandler);
@@ -175,12 +163,34 @@ public class Connector {
      * @return the {@link Response}
      */
     private Response post(String query, String variables, String path, RequestSpecification request) {
-        String postEndpoint = getCompleteEndpoint(path);
+        String postEndpoint = getCompleteEndpoint(replaceVariables(path, this));
         Object object = bodyFor(query, variables);
         return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
                 .body(object)
                 .when()
                 .post(postEndpoint));
+    }
+
+    /**
+     * Sends a get with the given query and ensures that one is authenticated.
+     *
+     * @param query        the query
+     * @param parameter    optional parameters of the query, empty string if non available
+     * @param loginHandler the {@link LoginHandler} for authentication
+     */
+    public void put(String query, String parameter, String path, LoginHandler loginHandler) {
+        query = replaceVariables(query, this);
+        response = put(query, parameter, path, login(loginHandler));
+        setPreviousResponse();
+    }
+
+    private Response put(String query, String parameter, String path, RequestSpecification request) {
+        String theEndpoint = getCompleteEndpoint(replaceVariables(path, this));
+        Object object = bodyFor(query, parameter);
+        return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
+                .body(object)
+                .when()
+                .put(theEndpoint));
     }
 
     private String getCompleteEndpoint(String path) {
