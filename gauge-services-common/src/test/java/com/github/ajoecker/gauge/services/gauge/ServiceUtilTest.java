@@ -1,8 +1,9 @@
 package com.github.ajoecker.gauge.services.gauge;
 
+import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.ConfigurationSource;
 import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.gauge.ServiceUtil;
+import com.github.ajoecker.gauge.services.VariableAccessor;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Assertions;
@@ -10,15 +11,29 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.isMap;
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.splitIntoKeyValueList;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ServiceUtilTest {
+    private VariableStorage variableStorage = new VariableStorage() {
+        Map<String, Object> container = new HashMap<>();
+
+        @Override
+        public void put(String key, Object value) {
+            container.put(key, value);
+        }
+
+        @Override
+        public Object get(String key) {
+            return container.get(key);
+        }
+    };
+
     @Test
     public void recognisesMap() {
         String mapString = "{name: Banksy, nationality: British}";
@@ -99,6 +114,34 @@ public class ServiceUtilTest {
     public void splitCorrectly() {
         List<String> strings = splitIntoKeyValueList("last_name=Doe,first_name=John");
         assertThat(strings).containsExactly("last_name", "Doe", "first_name", "John");
+    }
+
+    @Test
+    public void replaceSingleVariable() {
+        variableStorage.put("lastname", "Miller");
+        Connector connector = new Connector(new VariableAccessor(), variableStorage);
+        assertThat(replaceVariables("%lastname%", connector)).isEqualTo("Miller");
+    }
+
+    @Test
+    public void replaceVariableInResource() {
+        variableStorage.put("id", "4");
+        Connector connector = new Connector(new VariableAccessor(), variableStorage);
+        assertThat(replaceVariables("cases/%id%", connector)).isEqualTo("cases/4");
+    }
+
+    @Test
+    public void replaceVariableInResource02() {
+        variableStorage.put("id", "4");
+        Connector connector = new Connector(new VariableAccessor(), variableStorage);
+        assertThat(replaceVariables("cases/%id%/other", connector)).isEqualTo("cases/4/other");
+    }
+
+    @Test
+    public void replaceVariableWithNoVariable() {
+        variableStorage.put("id", "4");
+        Connector connector = new Connector(new VariableAccessor(), variableStorage);
+        assertThat(replaceVariables("cases", connector)).isEqualTo("cases");
     }
 
     @BeforeEach

@@ -6,12 +6,12 @@ import com.google.common.base.Strings;
 import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
 import com.thoughtworks.gauge.TableRow;
-import com.thoughtworks.gauge.datastore.DataStoreFactory;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
@@ -21,6 +21,7 @@ import static java.util.Arrays.stream;
  */
 public final class ServiceUtil {
     private static final String COMMA_SEPARATED;
+    private static final Pattern compile = Pattern.compile("(%.+%)");
 
     // test-friendly
     static ConfigurationSource configurationSource = new ConfigurationSource() {
@@ -68,40 +69,33 @@ public final class ServiceUtil {
         String[] split = split(variables);
         for (String s : split) {
             String[] keyValue = s.split("=");
-            String replacement = replace(keyValue[1], connector);
-            query = doReplace(query, keyValue[0], replacement);
+            String replacement = replaceVariables(keyValue[1], connector);
+            query = queryWithoutVariables(query, keyValue[0], replacement);
         }
         return query;
     }
 
-    /**
-     * Checks whether the given string is masked and therefore needs to be replaced. If not, the value is returned.
-     * <p>
-     * If it is masked, it first checks the {@link DataStoreFactory#getScenarioDataStore()} for an existing key and returns
-     * the value of the key, if existing.
-     * <p>
-     * If not, it checks whether a previous response has been done and the key can be found there and returns the value,
-     * if existing
-     *
-     * @param keyValue  the key
-     * @param connector the {@link Connector}
-     * @return an actual value
-     */
-    public static String replace(String keyValue, Connector connector) {
-        if (configurationSource.isMasked(keyValue)) {
-            String toLookFor = configurationSource.unmask(keyValue);
-            Object saved = DataStoreFactory.getScenarioDataStore().get(toLookFor);
-            if (saved != null) {
-                return saved.toString();
-            }
-            if (connector.hasPreviousResponse()) {
-                String prev = extractPathFromPreviousRequest(toLookFor, connector);
-                if (!Strings.isNullOrEmpty(prev)) {
-                    return prev;
-                }
+    public static String replaceVariables(String v, Connector connector) {
+        Matcher matcher = compile.matcher(v);
+        if (matcher.find()) {
+            String variableValue = getVariableValue(configurationSource.unmask(matcher.group(1)), connector);
+            return new StringBuffer(v).replace(matcher.start(1), matcher.end(1), variableValue).toString();
+        }
+        return v;
+    }
+
+    private static String getVariableValue(String variable, Connector connector) {
+        Object saved = connector.getFromVariableStorage(variable);
+        if (saved != null) {
+            return saved.toString();
+        }
+        if (connector.hasPreviousResponse()) {
+            String prev = extractPathFromPreviousRequest(variable, connector);
+            if (!Strings.isNullOrEmpty(prev)) {
+                return prev;
             }
         }
-        return keyValue;
+        return variable;
     }
 
     private static String extractPathFromPreviousRequest(String toLookFor, Connector connector) {
@@ -112,8 +106,8 @@ public final class ServiceUtil {
         return path.toString();
     }
 
-    private static String doReplace(String query, String key, String replacement) {
-        return query.replace(configurationSource.mask(key.trim()), replacement.trim());
+    private static String queryWithoutVariables(String query, String key, String value) {
+        return query.replace(configurationSource.mask(key.trim()), value.trim());
     }
 
     /**
@@ -127,34 +121,9 @@ public final class ServiceUtil {
     public static String replaceVariablesInQuery(String query, Table variables, Connector connector) {
         List<TableRow> tableRows = variables.getTableRows();
         for (TableRow row : tableRows) {
-            query = doReplace(query, row.getCell("name"), replace(row.getCell("value"), connector));
+            query = queryWithoutVariables(query, row.getCell("name"), replaceVariables(row.getCell("value"), connector));
         }
         return query;
-    }
-
-    /**
-     * Replaces all masked values in the given query by the new value
-     *
-     * @param query    the query containing masked value
-     * @param newValue the value to replace
-     * @return the query with the new value
-     */
-    public static String replaceMasked(String query, String newValue) {
-        return query.replaceAll("%.+%", newValue);
-    }
-
-    /**
-     * Extracts the variable of query
-     *
-     * @param query the query
-     * @return the variable
-     */
-    public static String extractPlaceholder(String query) {
-        int indexOf = query.indexOf('%');
-        if (indexOf > 0) {
-            return query.substring(indexOf + 1, query.indexOf('%', indexOf + 1));
-        }
-        return "";
     }
 
     /**

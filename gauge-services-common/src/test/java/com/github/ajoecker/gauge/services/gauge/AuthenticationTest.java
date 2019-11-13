@@ -1,5 +1,6 @@
 package com.github.ajoecker.gauge.services.gauge;
 
+import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.Registry;
 import com.github.ajoecker.gauge.services.VariableAccessor;
@@ -31,7 +32,7 @@ public class AuthenticationTest {
                 Assertions.assertEquals("funny-token", connector.getVariableAccessor().token());
             }
         };
-        Registry.init(new Connector(variableAccessor), loginHandler);
+        Registry.init(new Connector(variableAccessor, VariableStorage.create()), loginHandler);
         new Authentication().loginWithToken("funny-token");
     }
 }

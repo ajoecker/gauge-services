@@ -1,6 +1,6 @@
 package com.github.ajoecker.gauge.services;
 
-import com.github.ajoecker.gauge.services.gauge.ServiceUtil;
+import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
@@ -14,7 +14,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.*;
-import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -23,18 +22,20 @@ import static org.hamcrest.Matchers.*;
  */
 public class Connector {
     public static final String NO_PREFIX = "";
+    private final VariableStorage variableStorage;
     private String endpoint;
     private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
     private Response response;
     private VariableAccessor variableAccessor;
 
     public Connector() {
-        this(new VariableAccessor());
+        this(new VariableAccessor(), VariableStorage.create());
     }
 
-    public Connector(VariableAccessor variableAccessor) {
+    public Connector(VariableAccessor variableAccessor, VariableStorage variableStorage) {
         setVariableAccessor(variableAccessor);
         setEndpoint(variableAccessor.endpoint());
+        this.variableStorage = variableStorage;
     }
 
     public void setVariableAccessor(VariableAccessor variableAccessor) {
@@ -128,25 +129,32 @@ public class Connector {
     /**
      * Sends a get with the given query and ensures that one is authenticated.
      *
-     * @param query        the query
+     * @param resource        the query
      * @param parameter    optional parameters of the query, empty string if non available
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public void get(String query, String parameter, LoginHandler loginHandler) {
-        String variable = ServiceUtil.extractPlaceholder(query);
-        if (!Strings.isNullOrEmpty(variable)) {
-            Object extractedValueFromCache = getScenarioDataStore().get(variable);
-            if (extractedValueFromCache != null) {
-                query = ServiceUtil.replaceMasked(query, extractedValueFromCache.toString());
-            }
-        }
-        response = get(query, parameter, login(loginHandler));
+    public void get(String resource, String parameter, LoginHandler loginHandler) {
+        resource = replaceVariables(resource, this);
+        response = get(resource, parameter, login(loginHandler));
+        setPreviousResponse();
+    }
+
+    /**
+     * Sends a get with the given query and ensures that one is authenticated.
+     *
+     * @param resource        the query
+     * @param parameter    optional parameters of the query, empty string if non available
+     * @param loginHandler the {@link LoginHandler} for authentication
+     */
+    public void put(String resource, String parameter, LoginHandler loginHandler) {
+        resource = replaceVariables(resource, this);
+        response = get(resource, parameter, login(loginHandler));
         setPreviousResponse();
     }
 
     public void deleteWithLogin(String query, String path, LoginHandler loginHandler) {
         RequestSpecification request = login(loginHandler);
-        String realQuery = replace(query, this);
+        String realQuery = replaceVariables(query, this);
         response = checkDebugPrint(request.delete(checkTrailingSlash(getCompleteEndpoint(path), realQuery)));
         setPreviousResponse();
     }
@@ -285,7 +293,7 @@ public class Connector {
         if (path instanceof List) {
             List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
             Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
-            first.ifPresent(f -> getScenarioDataStore().put(variable, f.get(variable)));
+            first.ifPresent(f -> variableStorage.put(variable, f.get(variable)));
         }
     }
 
@@ -294,10 +302,14 @@ public class Connector {
         while (iterator.hasNext()) {
             String key = iterator.next();
             String value = iterator.next();
-            if (!target.get(key).equals(replace(value, this))) {
+            if (!target.get(key).equals(replaceVariables(value, this))) {
                 return false;
             }
         }
         return true;
+    }
+
+    public Object getFromVariableStorage(String toLookFor) {
+        return variableStorage.get(toLookFor);
     }
 }
