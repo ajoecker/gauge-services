@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.function.UnaryOperator;
 
 import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariablesInQuery;
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.separator;
 import static java.nio.file.Files.readString;
 
 /**
@@ -41,7 +40,7 @@ public final class TokenBasedLogin extends AbstractLoginHandler {
 
     @Override
     public void loginWithGivenCredentials(String user, String password, Connector connector) {
-        loginToken = sendLoginQuery(connector, s -> replaceVariablesInQuery(s, "user:" + user + separator() + "password:" + password, connector));
+        loginToken = sendLoginQuery(connector, s -> replaceVariablesInQuery(s, "user:" + user + ", password:" + password, connector));
     }
 
     private String sendLoginQuery(Connector connector, UnaryOperator<String> queryMapper) {

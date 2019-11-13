@@ -28,13 +28,13 @@ To use the library in a project simply put the following in the `pom.xml`
 <dependency>  
  <groupId>com.github.ajoecker</groupId>
  <artifactId>gauge-graphql</artifactId>
- <version>0.3.1-SNAPSHOT</version>
+ <version>0.3.3-SNAPSHOT</version>
  <scope>test</scope>
 </dependency>  
 ```
 #### Gradle
 ```
-testCompile 'com.github.ajoecker:gauge-graphql:0.3.1-SNAPSHOT'
+testCompile 'com.github.ajoecker:gauge-graphql:0.3.3-SNAPSHOT'
 ```
 
 ### REST 
@@ -44,7 +44,7 @@ To use the library in a project simply put the following in the `pom.xml`
 <dependency>  
  <groupId>com.github.ajoecker</groupId>
  <artifactId>gauge-rest</artifactId>
- <version>0.3.1-SNAPSHOT</version>
+ <version>0.3.3-SNAPSHOT</version>
  <scope>test</scope>
 </dependency>  
 ```
@@ -52,7 +52,7 @@ To use the library in a project simply put the following in the `pom.xml`
 
 #### Gradle
 ```
-testCompile 'com.github.ajoecker:gauge-rest:0.3.1-SNAPSHOT'
+testCompile 'com.github.ajoecker:gauge-rest:0.3.3-SNAPSHOT'
 ```
 ## Examples
 The project [gauge-service-examples](https://github.com/ajoecker/gauge-services-examples) shows some examples of the usage.
@@ -84,7 +84,7 @@ To verify that a request took maximal of time, one can use one of the following
 * And the request finished in less than <timeout> s
 ```
 for example
-```$xslt
+```
 * Then the request finished in less than "2" s
 ```
 #### Status code
@@ -93,8 +93,8 @@ To verify a status code
 * Then status code is <code>
 * And status code is <code>
 ```
-for exaomple
-```$xslt
+for example
+```
 * And status code is "200"
 ```
 #### Authentication
@@ -102,7 +102,7 @@ The library supports Basic Authentication via user / password combination, via b
 to receive a token for succeeding queries. 
 
 Simple Basic Authentication with a user and password
-```$xslt
+```
 * When <user> logs in with password <password>
 * And <user> logs in with password <password>
 ```
@@ -112,25 +112,25 @@ In case the authentication information is stored in the [Configuration](#Configu
 * And user logs in
 ```
 For an existing token
-```$xslt
+```
 * When user logs in with <token>
 * And user logs in with <token>
 ```
 #### GET
 To send a GET request the following can be used
-```$xslt
+```
 * When getting <resource>
 * And getting <resource>
 ```
 For sending parameters with the query
-```$xslt
+```
 * When getting <query> with <parameters>
 * And getting <query> with <parameters>
 ```
 whereas the parameters can either be a string or a gauge table
 
 for example
-```$xslt
+```
 * When getting "comments" with 
 
    |name  |value|
@@ -144,14 +144,14 @@ For multiple parameters one can either use multiple rows in the table or a `,` s
 To send a POST request, the following can be used:
 
 * To simple post a query to the current endpoint
-```$xslt
+```
 * When posting <query>
 * And posting <query>
 ```
 whereas the `<query>` is a file containing the actual query.
 
 for example
-```$xslt
+```
 * Given the endpoint "https://api.predic8.de:443/shop/products/"
 * When posting <file:src/test/resources/wildberries.json>
 * Then "name" is "Wildberries Wild"
@@ -159,7 +159,7 @@ for example
 the `file` parameter gives the full path to the query file relative to the project (or with `/` as an absolute path to the file).
 
 In the example the `wildberries.json` looks like this
-```$xslt
+```
 {
   "name": "Wildberries Wild",
   "price": 10.99,
@@ -169,26 +169,26 @@ In the example the `wildberries.json` looks like this
 ```
 
 * To post a query to a certain path
-```$xslt
+```
 * When posting <query> to <path>
 * And posting <query> to <path>
 ```
 This allows to define a common endpoint and post to different paths.
 
 with the example above, one could rewrite it to 
-```$xslt
+```
 * Given the endpoint "https://api.predic8.de:443"
 * When posting <file:src/test/resources/wildberries.json> to "shop/products"
 * Then "name" is "Wildberries Wild"
 ```
 
 * To post a query with parameters
-```$xslt
+```
 * When posting <query> with <parameters> 
 * And posting <query> with <parameters>
 ```
 for example
-```$xslt
+```
 * When posting <file:src/test/resources/popular_artists_variable.graphql> with 
 
    |name|value|
@@ -198,14 +198,17 @@ for example
 ```
 This can also be combined then with the posting a query to a certain path.
 
-#### Exracting results
+#### PUT
+PUT follows the same as described in [POST](#POST), with using `putting` instead of `posting`.
+
+#### Extracting results
 Any result can be extracted into a variable by defining the parent element and a matcher to find the variable
-```$xslt
+```
 * Then extracting <variable> from <parent> where <attribute>
 * And extracting <variable> from <parent> where <attribute>
 ```
 In case no parent element is required
-```$xslt
+```
 * Then extracting <variable> where <attribute>"
 * And extracting <variable> where <attribute>
 ```
@@ -213,14 +216,14 @@ In case no parent element is required
 this can be used to 
 
 * verify the value of the variable
-```$xslt
+```
 * Use "https://jsonplaceholder.typicode.com/"
 * When getting "comments" with "postId=1"
 * And extracting "id" where "email=Nikita@garfield.biz"
 * Then "id" is "3"
 ```
 * use it for a succeeding call
-```$xslt
+```
 * And extracting "id" from "cases" where "last_name=Vetinari,first_name=Havelock"
 * When getting "cases/%id%"
 ``` 
@@ -229,22 +232,22 @@ this can be used to
 To verify a response
 
 ##### contains
-```$xslt
+```
 Then <path> contains <value>", "And <path> contains <value>
 ```
 asserts that the given path contains the given value, for example
-```$xslt
+```
 ## popular artists
 * When posting <file:src/test/resources/popular_artists.graphql>
 * Then "popular_artists.artists.name" contains "Pablo Picasso, Banksy"
 ```
 similar to examples above the expected values can be given as string or gauge table
 ##### is
-```$xslt
+```
 Then <path> is <value>", "And <path> is <value>
 ```
 asserts that the given path contains the given value, for example
-```$xslt
+```
 ## popular artists is matching with table
 * When posting <file:src/test/resources/popular_artists.graphql>
 * Then "popular_artists.artists" is 
@@ -255,7 +258,7 @@ asserts that the given path contains the given value, for example
    |Banksy       |British    |
 ```
 ##### is empty
-```$xslt
+```
 * When getting "zipcode/any_invalid_zipcode"
 * Then "city.name" is empty
 ```
@@ -285,7 +288,7 @@ When using variables, the `When` step in the spec file must replace this variabl
 
 Like
 ```
-* When posting <file:queries/popular_artists_variable.graphql> with "size:4"`
+* When posting <file:queries/popular_artists_variable.graphql> with "size=4"`
 ```
 
 It is also possible to facilitate gauge table for dynamic replacement
@@ -339,7 +342,27 @@ for the latter the input would look like this:
   }
 }
 ```
+## Referencing Variables
+Variables can be defined via the steps provided from [https://github.com/ajoecker/gauge-random-data](https://github.com/ajoecker/gauge-random-data).
 
+A defined variable can be referenced inside a scenario with `%`
+
+for example:
+```
+## Comments with id and table
+* Given the endpoint "https://jsonplaceholder.typicode.com/"
+* Set "email" to "Nikita@garfield.biz"
+* When getting "comments" with "postId=1"
+* And extracting "id" where "email=%email%"
+* Then "id" is "3"
+```
+In this case, the variable `%email%` will be replaced with the defined value `Nikita@garfield.biz`.
+
+**Attention**
+
+Values are first replaced from a defined variable in the scenario and then from a previous response.
+This means if a variable is defined in the scenario and from a previous responds, the first is taken.
+    
 ## Configuration
 In the Gauge environment the following keys are recognized
  
@@ -353,7 +376,7 @@ The endpoint of the api. Only mandatory if the endpoint is not given in the spec
 
 Will add request and response debug information on the console.
 
-Possible valuzes are `all` to log all information for request and response or `failure` to log only failed requests/responses 
+Possible values are `all` to log all information for request and response or `failure` to log only failed requests/responses 
  
 ### gauge.service.token
 *Optional*
@@ -379,10 +402,6 @@ When a *gauge.service.token.query* is given, this becomes *mandatory* as it give
 
 E.g. in the above query example, the `gauge.service.token.path` could be `data.login.token`
  
-### gauge.service.separator
-*Optional*
-
-Defines the separator in the verifying step to define multiple elements that needs to be verified. Default is `,`
 #### Example
 `* Then "popular_artists.artists.name" must contain "Pablo Picasso, Banksy"`
 

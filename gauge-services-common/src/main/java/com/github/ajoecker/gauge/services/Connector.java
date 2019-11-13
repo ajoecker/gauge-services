@@ -1,5 +1,6 @@
 package com.github.ajoecker.gauge.services;
 
+import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.gauge.ServiceUtil;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.google.common.base.Strings;
@@ -12,9 +13,9 @@ import org.hamcrest.Matchers;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.splitIntoKeyValueList;
-import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.*;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -23,18 +24,20 @@ import static org.hamcrest.Matchers.*;
  */
 public class Connector {
     public static final String NO_PREFIX = "";
+    private final VariableStorage variableStorage;
     private String endpoint;
     private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
     private Response response;
     private VariableAccessor variableAccessor;
 
     public Connector() {
-        this(new VariableAccessor());
+        this(new VariableAccessor(), VariableStorage.create());
     }
 
-    public Connector(VariableAccessor variableAccessor) {
+    public Connector(VariableAccessor variableAccessor, VariableStorage variableStorage) {
         setVariableAccessor(variableAccessor);
         setEndpoint(variableAccessor.endpoint());
+        this.variableStorage = variableStorage;
     }
 
     public void setVariableAccessor(VariableAccessor variableAccessor) {
@@ -128,25 +131,21 @@ public class Connector {
     /**
      * Sends a get with the given query and ensures that one is authenticated.
      *
-     * @param query        the query
+     * @param resource     the query
      * @param parameter    optional parameters of the query, empty string if non available
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public void get(String query, String parameter, LoginHandler loginHandler) {
-        String variable = ServiceUtil.extractPlaceholder(query);
-        if (!Strings.isNullOrEmpty(variable)) {
-            Object extractedValueFromCache = getScenarioDataStore().get(variable);
-            if (extractedValueFromCache != null) {
-                query = ServiceUtil.replaceMasked(query, extractedValueFromCache.toString());
-            }
-        }
-        response = get(query, parameter, login(loginHandler));
+    public void get(String resource, String parameter, LoginHandler loginHandler) {
+        resource = replaceVariables(resource, this);
+        response = get(resource, parameter, login(loginHandler));
         setPreviousResponse();
     }
 
+
     public void deleteWithLogin(String query, String path, LoginHandler loginHandler) {
         RequestSpecification request = login(loginHandler);
-        response = checkDebugPrint(request.delete(checkTrailingSlash(getCompleteEndpoint(path), query)));
+        String realQuery = replaceVariables(query, this);
+        response = checkDebugPrint(request.delete(checkTrailingSlash(getCompleteEndpoint(path), realQuery)));
         setPreviousResponse();
     }
 
@@ -166,11 +165,34 @@ public class Connector {
      * @return the {@link Response}
      */
     private Response post(String query, String variables, String path, RequestSpecification request) {
-        String postEndpoint = getCompleteEndpoint(path);
+        String postEndpoint = getCompleteEndpoint(replaceVariables(path, this));
+        Object object = bodyFor(query, variables);
         return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
-                .body(bodyFor(query, variables))
+                .body(object)
                 .when()
                 .post(postEndpoint));
+    }
+
+    /**
+     * Sends a get with the given query and ensures that one is authenticated.
+     *
+     * @param query        the query
+     * @param parameter    optional parameters of the query, empty string if non available
+     * @param loginHandler the {@link LoginHandler} for authentication
+     */
+    public void put(String query, String parameter, String path, LoginHandler loginHandler) {
+        query = replaceVariables(query, this);
+        response = put(query, parameter, path, login(loginHandler));
+        setPreviousResponse();
+    }
+
+    private Response put(String query, String parameter, String path, RequestSpecification request) {
+        String theEndpoint = getCompleteEndpoint(replaceVariables(path, this));
+        Object object = bodyFor(query, parameter);
+        return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
+                .body(object)
+                .when()
+                .put(theEndpoint));
     }
 
     private String getCompleteEndpoint(String path) {
@@ -283,17 +305,29 @@ public class Connector {
         if (path instanceof List) {
             List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
             Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
-            first.ifPresent(f -> getScenarioDataStore().put(variable, f.get(variable)));
+            first.ifPresent(f -> variableStorage.put(variable, f.get(variable)));
         }
+    }
+
+    private List<String> splitIntoKeyValueList(String s) {
+        return Arrays.stream(s.split(COMMA_SEPARATED))
+                .flatMap(s1 -> Arrays.stream(s1.split("=")))
+                .collect(Collectors.toList());
     }
 
     private boolean matches(Map<Object, Object> target, List<String> keyValues) {
         Iterator<String> iterator = keyValues.iterator();
         while (iterator.hasNext()) {
-            if (!target.get(iterator.next()).equals(iterator.next())) {
+            String key = iterator.next();
+            String value = iterator.next();
+            if (!target.get(key).equals(replaceVariables(value, this))) {
                 return false;
             }
         }
         return true;
+    }
+
+    public Object getFromVariableStorage(String toLookFor) {
+        return variableStorage.get(toLookFor);
     }
 }

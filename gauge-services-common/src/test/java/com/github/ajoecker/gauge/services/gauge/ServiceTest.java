@@ -36,8 +36,8 @@ public class ServiceTest {
         final String theQuery = "1234";
         Connector connector = new Connector() {
             @Override
-            public void get(String query, String parameters, LoginHandler loginHandler) {
-                assertEquals(theQuery, query);
+            public void get(String resource, String parameters, LoginHandler loginHandler) {
+                assertEquals(theQuery, resource);
             }
         };
         Registry.init(connector);
