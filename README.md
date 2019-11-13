@@ -93,7 +93,7 @@ To verify a status code
 * Then status code is <code>
 * And status code is <code>
 ```
-for exaomple
+for example
 ```
 * And status code is "200"
 ```
@@ -198,7 +198,10 @@ for example
 ```
 This can also be combined then with the posting a query to a certain path.
 
-#### Exracting results
+#### PUT
+PUT follows the same as described in [POST](#POST), with using `putting` instead of `posting`.
+
+#### Extracting results
 Any result can be extracted into a variable by defining the parent element and a matcher to find the variable
 ```
 * Then extracting <variable> from <parent> where <attribute>
@@ -285,7 +288,7 @@ When using variables, the `When` step in the spec file must replace this variabl
 
 Like
 ```
-* When posting <file:queries/popular_artists_variable.graphql> with "size:4"`
+* When posting <file:queries/popular_artists_variable.graphql> with "size=4"`
 ```
 
 It is also possible to facilitate gauge table for dynamic replacement
@@ -373,7 +376,7 @@ The endpoint of the api. Only mandatory if the endpoint is not given in the spec
 
 Will add request and response debug information on the console.
 
-Possible valuzes are `all` to log all information for request and response or `failure` to log only failed requests/responses 
+Possible values are `all` to log all information for request and response or `failure` to log only failed requests/responses 
  
 ### gauge.service.token
 *Optional*
@@ -399,10 +402,6 @@ When a *gauge.service.token.query* is given, this becomes *mandatory* as it give
 
 E.g. in the above query example, the `gauge.service.token.path` could be `data.login.token`
  
-### gauge.service.separator
-*Optional*
-
-Defines the separator in the verifying step to define multiple elements that needs to be verified. Default is `,`
 #### Example
 `* Then "popular_artists.artists.name" must contain "Pablo Picasso, Banksy"`
 

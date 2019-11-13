@@ -11,12 +11,12 @@ import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariab
 public class POST extends Service {
     @Step({"When posting <query>", "And posting <query>"})
     public void posting(String query) {
-        postWithVariables(query, "", "");
+        connector.post(query, "", "", loginHandler);
     }
 
     @Step({"When posting <query> to <path>", "And posting <query> to <path>"})
     public void posting(String query, String path) {
-        postWithVariables(query, path, "");
+        connector.post(query, "", path, loginHandler);
     }
 
     @Step({"When posting <query> with <parameters>", "And posting <query> with <parameters>"})
@@ -29,18 +29,14 @@ public class POST extends Service {
         if (variables instanceof String) {
             String variablesAsString = (String) variables;
             if (variablesAsString.trim().startsWith("{") && variablesAsString.trim().endsWith("}")) {
-                postWithVariables(query, path, variablesAsString);
+                connector.post(query, variablesAsString, path, loginHandler);
             } else {
-                postWithVariables(replaceVariablesInQuery(query, variablesAsString, connector), path, "");
+                connector.post(replaceVariablesInQuery(query, variablesAsString, connector), "", path, loginHandler);
             }
         } else if (variables instanceof Table) {
-            postWithVariables(replaceVariablesInQuery(query, (Table) variables, connector), path, "");
+            connector.post(replaceVariablesInQuery(query, (Table) variables, connector), "", path, loginHandler);
         } else {
             throw new IllegalArgumentException("unknown variable types " + variables.getClass() + " for " + variables);
         }
-    }
-
-    private void postWithVariables(String query, String path, String variables) {
-        connector.post(query, variables, path, loginHandler);
     }
 }

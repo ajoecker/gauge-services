@@ -1,28 +1,9 @@
 package com.github.ajoecker.gauge.services;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.orDefault;
-
 /**
  * Interface to define multiple configurations.
  */
 public interface ConfigurationSource {
-    /**
-     * Returns the string that separates multiple values e.g. when verifying a response.
-     * <p>
-     * The default value is <code>,</code> and is read in a Gauge project via the environment variable
-     * <code>gauge.service.separator</code>. If this variable is not existing or empty, the default value is taken.
-     * <p>
-     * For example
-     * <pre>
-     *     * Then "popular_artists.artists.name" must contain "Pablo Picasso, Banksy"
-     * </pre>
-     *
-     * @return the separator between multiple values
-     */
-    default String separator() {
-        return orDefault("gauge.service.separator", ",");
-    }
-
     /**
      * Masks a string with % as prefix and suffix of this string
      *

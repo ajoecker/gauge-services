@@ -1,10 +1,10 @@
 package com.github.ajoecker.gauge.services;
 
-import com.github.ajoecker.gauge.services.login.BasicAuthentication;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.github.ajoecker.gauge.services.login.TokenBasedLogin;
+import com.github.ajoecker.gauge.services.login.BasicAuthentication;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.orDefault;
+import java.util.Optional;
 
 public final class Registry {
     public enum LoginType {
@@ -19,7 +19,8 @@ public final class Registry {
     }
 
     public static void init(Connector connector) {
-        init(connector, getLoginHandler(orDefault("gauge.service.loginhandler", LoginType.BASIC.toString())));
+        String type = Optional.ofNullable(System.getenv("gauge.service.loginhandler")).orElse(LoginType.BASIC.toString());
+        init(connector, getLoginHandler(type));
     }
 
     public static void init(Connector connector, LoginHandler loginHandler) {

@@ -1,6 +1,7 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.random.data.VariableStorage;
+import com.github.ajoecker.gauge.services.gauge.ServiceUtil;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
@@ -12,6 +13,7 @@ import org.hamcrest.Matchers;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.*;
 import static io.restassured.RestAssured.given;
@@ -305,6 +307,12 @@ public class Connector {
             Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
             first.ifPresent(f -> variableStorage.put(variable, f.get(variable)));
         }
+    }
+
+    private List<String> splitIntoKeyValueList(String s) {
+        return Arrays.stream(s.split(COMMA_SEPARATED))
+                .flatMap(s1 -> Arrays.stream(s1.split("=")))
+                .collect(Collectors.toList());
     }
 
     private boolean matches(Map<Object, Object> target, List<String> keyValues) {

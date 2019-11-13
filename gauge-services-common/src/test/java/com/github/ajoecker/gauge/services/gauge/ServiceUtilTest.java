@@ -35,35 +35,6 @@ public class ServiceUtilTest {
     };
 
     @Test
-    public void recognisesMap() {
-        String mapString = "{name: Banksy, nationality: British}";
-        Assertions.assertTrue(isMap(mapString));
-    }
-
-    @Test
-    public void ignoresNonMap() {
-        String mapString = "whatever";
-        Assertions.assertFalse(isMap(mapString));
-    }
-
-    @Test
-    public void parsesSingleMap() {
-        String mapString = "{name: Banksy, nationality: British}";
-        List<Map<String, String>> parse = ServiceUtil.parseMap(mapString);
-        assertEquals(parse, List.of(Map.of("name", "Banksy", "nationality", "British")));
-    }
-
-    @Test
-    public void parsesMultiMap() {
-        String mapString = "{name: Banksy, nationality: British}, {name: Pablo Picasso, nationality: Spanish}";
-        List<Map<String, String>> parse = ServiceUtil.parseMap(mapString);
-        assertEquals(parse, List.of(
-                Map.of("name", "Banksy", "nationality", "British"),
-                Map.of("name", "Pablo Picasso", "nationality", "Spanish")
-        ));
-    }
-
-    @Test
     public void replaceVariablesInQueryWorks() {
         String query = "{\n" +
                 "    popular_artists(size: %size%) {\n" +
@@ -108,12 +79,6 @@ public class ServiceUtilTest {
         Connector connector = new Connector();
         connector.setPreviousResponse(re);
         assertEquals(ServiceUtil.replaceVariablesInQuery(query, "size=%foo%", connector), queryReplaced);
-    }
-
-    @Test
-    public void splitCorrectly() {
-        List<String> strings = splitIntoKeyValueList("last_name=Doe,first_name=John");
-        assertThat(strings).containsExactly("last_name", "Doe", "first_name", "John");
     }
 
     @Test
