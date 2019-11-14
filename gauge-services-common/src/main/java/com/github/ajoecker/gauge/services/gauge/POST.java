@@ -3,6 +3,7 @@ package com.github.ajoecker.gauge.services.gauge;
 import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
 
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariables;
 import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariablesInQuery;
 
 /**
@@ -29,7 +30,7 @@ public class POST extends Service {
         if (variables instanceof String) {
             String variablesAsString = (String) variables;
             if (variablesAsString.trim().startsWith("{") && variablesAsString.trim().endsWith("}")) {
-                connector.post(query, variablesAsString, path, loginHandler);
+                connector.post(query, replaceVariables(variablesAsString, connector), path, loginHandler);
             } else {
                 connector.post(replaceVariablesInQuery(query, variablesAsString, connector), "", path, loginHandler);
             }

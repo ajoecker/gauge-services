@@ -72,11 +72,13 @@ public final class ServiceUtil {
      */
     public static String replaceVariables(String v, Connector connector) {
         Matcher matcher = compile.matcher(v);
-        if (matcher.find()) {
+        String result = v;
+        while (matcher.find()) {
             String variableValue = getVariableValue(configurationSource.unmask(matcher.group(1)), connector);
-            return new StringBuffer(v).replace(matcher.start(1), matcher.end(1), variableValue).toString();
+            String substring = v.substring(matcher.start(1), matcher.end(1));
+            result = result.replace(substring, variableValue);
         }
-        return v;
+        return result;
     }
 
     private static String getVariableValue(String variable, Connector connector) {
