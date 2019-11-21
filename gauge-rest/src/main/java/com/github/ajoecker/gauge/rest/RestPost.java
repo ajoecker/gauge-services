@@ -1,30 +1,15 @@
-package com.github.ajoecker.gauge.services.gauge;
+package com.github.ajoecker.gauge.rest;
 
+import com.github.ajoecker.gauge.services.gauge.Service;
 import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
 
 import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariables;
 import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariablesInQuery;
 
-/**
- * The class {@link POST} contains all steps for a POST request
- */
-public class POST extends Service {
-    @Step({"When posting <query>", "And posting <query>"})
-    public void posting(String query) {
-        connector.post(query, "", "", loginHandler);
-    }
+public class RestPost extends Service {
 
-    @Step({"When posting <query> to <path>", "And posting <query> to <path>"})
-    public void posting(String query, String path) {
-        connector.post(query, "", path, loginHandler);
-    }
-
-    @Step({"When posting <query> with <parameters>", "And posting <query> with <parameters>"})
-    public void postingWithParameters(String query, Object parameters) {
-        postingWithVariables(query, "", parameters);
-    }
-
+    @Step({"When posting <query> to <path> with <variables>", "And posting <query> to <path> with <variables>"})
     public void postingWithVariables(String query, String path, Object variables) {
         if (variables instanceof String) {
             String variablesAsString = (String) variables;

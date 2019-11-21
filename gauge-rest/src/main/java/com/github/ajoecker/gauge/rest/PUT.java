@@ -1,5 +1,6 @@
-package com.github.ajoecker.gauge.services.gauge;
+package com.github.ajoecker.gauge.rest;
 
+import com.github.ajoecker.gauge.services.gauge.Service;
 import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
 

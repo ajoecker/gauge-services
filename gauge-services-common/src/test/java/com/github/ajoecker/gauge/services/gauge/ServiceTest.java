@@ -31,18 +31,18 @@ public class ServiceTest {
         new POST().posting(theQuery);
     }
 
-    @Test
-    public void getWithoutVariablesArePassedToConnector() {
-        final String theQuery = "1234";
-        Connector connector = new Connector() {
-            @Override
-            public void get(String resource, String parameters, LoginHandler loginHandler) {
-                assertEquals(theQuery, resource);
-            }
-        };
-        Registry.init(connector);
-        new GET().get(theQuery);
-    }
+//    @Test
+//    public void getWithoutVariablesArePassedToConnector() {
+//        final String theQuery = "1234";
+//        Connector connector = new Connector() {
+//            @Override
+//            public void get(String resource, String parameters, LoginHandler loginHandler) {
+//                assertEquals(theQuery, resource);
+//            }
+//        };
+//        Registry.init(connector);
+//        new GET().get(theQuery);
+//    }
 
     @Test
     public void statusCodeIsChecked() {

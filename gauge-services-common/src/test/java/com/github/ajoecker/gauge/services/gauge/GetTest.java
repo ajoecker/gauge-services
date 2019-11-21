@@ -12,19 +12,19 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class GetTest {
-    @Test
-    public void getWithParametersTable() {
-        Table table = new Table(List.of("name", "value"));
-        table.addRow(List.of("Hans", "German"));
-        table.addRow(List.of("Alicia", "Spain"));
-        Connector connector = new Connector() {
-            @Override
-            public void get(String resource, String parameter, LoginHandler loginHandler) {
-                assertAll(() -> assertEquals("Hans=German&Alicia=Spain", parameter),
-                        () -> assertEquals("foo", resource));
-            }
-        };
-        Registry.init(connector);
-        new GET().gettingParameters("foo", table);
-    }
+//    @Test
+//    public void getWithParametersTable() {
+//        Table table = new Table(List.of("name", "value"));
+//        table.addRow(List.of("Hans", "German"));
+//        table.addRow(List.of("Alicia", "Spain"));
+//        Connector connector = new Connector() {
+//            @Override
+//            public void get(String resource, String parameter, LoginHandler loginHandler) {
+//                assertAll(() -> assertEquals("Hans=German&Alicia=Spain", parameter),
+//                        () -> assertEquals("foo", resource));
+//            }
+//        };
+//        Registry.init(connector);
+//        new GET().gettingParameters("foo", table);
+//    }
 }
