@@ -32,6 +32,11 @@ public class BasicAuthentication extends AbstractLoginHandler {
     }
 
     @Override
+    public void loginWithToken(String token) {
+        this.token = token;
+    }
+
+    @Override
     public void loginWithSystemCredentials(Connector connector) {
         VariableAccessor variableAccessor = connector.getVariableAccessor();
         this.user = variableAccessor.user();

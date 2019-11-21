@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 /**
  * The class {@link GET} contains all step implementations for a GET request.
  */
-public class GET extends Service {
+public class GET extends Service<RestConnector> {
     @Step({"When getting <resource>", "And getting <resource>"})
     public void get(String resource) {
         connector.get(resource, "", loginHandler);

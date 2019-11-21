@@ -34,7 +34,7 @@ public interface LoginHandler {
         throw new IllegalCallerException("not implemented for " + this.getClass());
     }
 
-    default void loginWithQuery(String query, String variable, String tokenPath, Connector connector) {
+    default void loginWithQuery(String query, String tokenPath, Connector connector) {
         throw new IllegalCallerException("not implemented for " + this.getClass());
     }
 

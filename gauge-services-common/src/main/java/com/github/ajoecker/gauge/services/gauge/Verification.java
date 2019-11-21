@@ -1,5 +1,6 @@
 package com.github.ajoecker.gauge.services.gauge;
 
+import com.github.ajoecker.gauge.services.Connector;
 import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
@@ -11,13 +12,13 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.*;
-import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.COMMA_SEPARATED;
+import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.split;
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.empty;
 
-public class Verification extends Service {
+public class Verification extends Service<Connector> {
     @Step({"Then <path> contains <value>", "And <path> contains <value>"})
     public void thenContains(String dataPath, Object value) {
         compare(value, connector.thenContains(dataPath));

@@ -20,11 +20,8 @@ public class ServiceTest {
         final String theQuery = "this is a theQuery";
         Connector connector = new Connector() {
             @Override
-            public void post(String query, String variables, String path, LoginHandler loginHandler) {
-                assertAll(
-                        () -> assertEquals(query, query),
-                        () -> assertEquals("", variables)
-                );
+            public void post(String query, String path, LoginHandler loginHandler) {
+                assertEquals(query, query);
             }
         };
         Registry.init(connector);
@@ -61,11 +58,8 @@ public class ServiceTest {
     public void postWithVariablesAsTableNoReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void post(String query, String variables, String path, LoginHandler loginHandler) {
-                assertAll(
-                        () -> assertEquals("simple", query),
-                        () -> assertEquals("", variables)
-                );
+            public void post(String query, String path, LoginHandler loginHandler) {
+                assertEquals("simple", query);
             }
         };
         Table table = new Table(List.of("foo", "bar"));
@@ -78,11 +72,8 @@ public class ServiceTest {
     public void postWithVariablesAsTableWithReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void post(String query, String variables, String path, LoginHandler loginHandler) {
-                assertAll(
-                        () -> assertEquals("fooValue : barValue", query),
-                        () -> assertEquals("", variables)
-                );
+            public void post(String query, String path, LoginHandler loginHandler) {
+                assertEquals("fooValue : barValue", query);
             }
         };
         Table table = new Table(List.of("name", "value"));
@@ -96,33 +87,13 @@ public class ServiceTest {
     public void postWithVariablesAsStringWithReplacement() {
         Connector connector = new Connector() {
             @Override
-            public void post(String query, String variables, String path, LoginHandler loginHandler) {
-                assertAll(
-                        () -> assertEquals("fooValue : barValue", query),
-                        () -> assertEquals("", variables)
-                );
+            public void post(String query, String path, LoginHandler loginHandler) {
+                assertEquals("fooValue : barValue", query);
             }
         };
         String replacement = "foo=fooValue,bar=barValue";
         Registry.init(connector);
         new POST().postingWithVariables("%foo% : %bar%", "", replacement);
-    }
-
-    @Test
-    @Disabled
-    public void postWithVariablesAsMapWithReplacement() {
-        Connector connector = new Connector() {
-            @Override
-            public void post(String query, String variables, String path, LoginHandler loginHandler) {
-                assertAll(
-                        () -> assertEquals("foo : bar", query),
-                        () -> assertEquals("{foo:fooValue,bar:barValue}", variables)
-                );
-            }
-        };
-        String replacement = "{foo:fooValue,bar:barValue}";
-        Registry.init(connector);
-        new POST().postingWithVariables("foo : bar", "", replacement);
     }
 
     @Test

@@ -1,7 +1,6 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.random.data.VariableStorage;
-import com.github.ajoecker.gauge.services.gauge.ServiceUtil;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
@@ -27,7 +26,7 @@ public class Connector {
     private final VariableStorage variableStorage;
     private String endpoint;
     private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
-    private Response response;
+    protected Response response;
     private VariableAccessor variableAccessor;
 
     public Connector() {
@@ -40,7 +39,7 @@ public class Connector {
         this.variableStorage = variableStorage;
     }
 
-    public void setVariableAccessor(VariableAccessor variableAccessor) {
+    private void setVariableAccessor(VariableAccessor variableAccessor) {
         this.variableAccessor = variableAccessor;
     }
 
@@ -57,45 +56,29 @@ public class Connector {
         this.endpoint = endpoint;
     }
 
-    public String extract(String path) {
-        return response.then().extract().path(prefix(path));
-    }
-
     /**
      * Sends a post with the given query and variables
      *
-     * @param query     the query
-     * @param variables the variables
-     */
-    public void post(String query, String variables) {
-        response = post(query, variables, "", startRequest());
-        setPreviousResponse();
-    }
-
-    /**
-     * Sends a get with the given query
-     *
      * @param query the query
-     * @return the response of the get query
      */
-    public final Response get(String query) {
-        return get(query, "", startRequest());
+    public void post(String query) {
+        response = post(query, "", startRequest());
+        setPreviousResponse();
     }
 
     /**
      * Sends a post with the given query and ensures that one is authenticated.
      *
      * @param query        the query
-     * @param variables    the variables
      * @param path         the path to post to
      * @param loginHandler the {@link LoginHandler} for authentication
      */
-    public void post(String query, String variables, String path, LoginHandler loginHandler) {
-        response = post(query, variables, path, login(loginHandler));
+    public void post(String query, String path, LoginHandler loginHandler) {
+        response = post(query, path, login(loginHandler));
         setPreviousResponse();
     }
 
-    private void setPreviousResponse() {
+    protected void setPreviousResponse() {
         setPreviousResponse(response.then().extract());
     }
 
@@ -104,52 +87,20 @@ public class Connector {
     }
 
     /**
-     * Returns the prefix all paths of a responses must start with.
-     * <p>
-     * Default is an empty string.
-     *
-     * @return the prefix
-     */
-    protected String withPrefix() {
-        return NO_PREFIX;
-    }
-
-    /**
-     * Prefixes the path with the prefix ({@link #withPrefix()}) if the path does not already start with that prefix
+     * Prefixes the path with the prefix {@link #NO_PREFIX} if the path does not already start with that prefix
      *
      * @param dataPath the json path
-     * @return json path with guaranteed {@link #withPrefix()} at beginning
+     * @return json path with guaranteed {@link #NO_PREFIX} at beginning
      */
     public String prefix(String dataPath) {
-        String prefix = withPrefix();
+        String prefix = NO_PREFIX;
         if (prefix.length() > 0 && !dataPath.startsWith(prefix)) {
             return prefix + dataPath;
         }
         return dataPath;
     }
 
-    /**
-     * Sends a get with the given query and ensures that one is authenticated.
-     *
-     * @param resource     the query
-     * @param parameter    optional parameters of the query, empty string if non available
-     * @param loginHandler the {@link LoginHandler} for authentication
-     */
-    public void get(String resource, String parameter, LoginHandler loginHandler) {
-        resource = replaceVariables(resource, this);
-        response = get(resource, parameter, login(loginHandler));
-        setPreviousResponse();
-    }
-
-
-    public void deleteWithLogin(String query, String path, LoginHandler loginHandler) {
-        RequestSpecification request = login(loginHandler);
-        String realQuery = replaceVariables(query, this);
-        response = checkDebugPrint(request.delete(checkTrailingSlash(getCompleteEndpoint(path), realQuery)));
-        setPreviousResponse();
-    }
-
-    private RequestSpecification login(LoginHandler loginHandler) {
+    protected RequestSpecification login(LoginHandler loginHandler) {
         RequestSpecification request = startRequest();
         loginHandler.setLogin(request);
         return request;
@@ -164,49 +115,27 @@ public class Connector {
      * @param request the request
      * @return the {@link Response}
      */
-    private Response post(String query, String variables, String path, RequestSpecification request) {
+    private Response post(String query, String path, RequestSpecification request) {
         String postEndpoint = getCompleteEndpoint(replaceVariables(path, this));
-        Object object = bodyFor(query, variables);
+        Object object = bodyFor(query);
         return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
                 .body(object)
                 .when()
                 .post(postEndpoint));
     }
 
-    /**
-     * Sends a get with the given query and ensures that one is authenticated.
-     *
-     * @param query        the query
-     * @param parameter    optional parameters of the query, empty string if non available
-     * @param loginHandler the {@link LoginHandler} for authentication
-     */
-    public void put(String query, String parameter, String path, LoginHandler loginHandler) {
-        query = replaceVariables(query, this);
-        response = put(query, parameter, path, login(loginHandler));
-        setPreviousResponse();
-    }
-
-    private Response put(String query, String parameter, String path, RequestSpecification request) {
-        String theEndpoint = getCompleteEndpoint(replaceVariables(path, this));
-        Object object = bodyFor(query, parameter);
-        return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
-                .body(object)
-                .when()
-                .put(theEndpoint));
-    }
-
-    private String getCompleteEndpoint(String path) {
+    protected String getCompleteEndpoint(String path) {
         return checkTrailingSlash(endpoint, path);
     }
 
-    private String checkTrailingSlash(String base, String path) {
+    protected String checkTrailingSlash(String base, String path) {
         if (!Strings.isNullOrEmpty(path)) {
             return !base.endsWith("/") ? base + "/" + path : base + path;
         }
         return base;
     }
 
-    private Response checkDebugPrint(Response response) {
+    protected Response checkDebugPrint(Response response) {
         if (variableAccessor.logAll()) {
             response.then().log().all();
         } else if (variableAccessor.logFailure()) {
@@ -220,29 +149,11 @@ public class Connector {
      * <p>
      * Default method simply returns the query and applies no changes
      *
-     * @param query     the query
-     * @param variables the variables, empty string if no variables available
+     * @param query the query
      * @return the formatted object for the request
      */
-    protected Object bodyFor(String query, String variables) {
+    protected Object bodyFor(String query) {
         return query;
-    }
-
-    /**
-     * Sends a get with the given query to the given {@link RequestSpecification}
-     *
-     * @param query   the query
-     * @param request the request
-     * @return the {@link Response}
-     */
-    private Response get(String query, String parameters, RequestSpecification request) {
-        String queryPath = getCompleteEndpoint(query);
-        if (!Strings.isNullOrEmpty(parameters)) {
-            queryPath = queryPath + "?" + parameters;
-        }
-        return checkDebugPrint(request.contentType(ContentType.JSON)
-                .when()
-                .get(queryPath));
     }
 
     private RequestSpecification startRequest() {

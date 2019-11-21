@@ -38,8 +38,8 @@ public final class TokenBasedLogin extends AbstractLoginHandler {
     }
 
     @Override
-    public void loginWithQuery(String query, String variable, String tokenPath, Connector connector) {
-        connector.post(query, variable);
+    public void loginWithQuery(String query, String tokenPath, Connector connector) {
+        connector.post(query);
         loginToken = connector.pathFromPreviousResponse(tokenPath).toString();
     }
 }

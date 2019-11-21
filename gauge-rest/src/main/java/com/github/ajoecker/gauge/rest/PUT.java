@@ -9,7 +9,7 @@ import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariab
 /**
  * The class {@link PUT} contains all steps for a POST request
  */
-public class PUT extends Service {
+public class PUT extends Service<RestConnector> {
     @Step({"When putting <query>", "And putting <query>"})
     public void putting(String query) {
         connector.put(query, "", "", loginHandler);
