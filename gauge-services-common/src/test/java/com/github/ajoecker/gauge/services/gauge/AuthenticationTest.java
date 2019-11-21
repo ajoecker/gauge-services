@@ -18,21 +18,22 @@ public class AuthenticationTest {
                 return "wrong-token";
             }
         };
+        Connector connector = new Connector(variableAccessor, VariableStorage.create());
         LoginHandler loginHandler = new LoginHandler() {
             @Override
             public void setLogin(RequestSpecification request) {
             }
 
             @Override
-            public void loginWithGivenCredentials(String user, String password, Connector connector) {
+            public void loginWithUserPassword(String user, String password, Connector connector) {
             }
 
             @Override
-            public void loginWithSystemCredentials(Connector connector) {
-                Assertions.assertEquals("funny-token", connector.getVariableAccessor().token());
+            public void loginWithToken(String token) {
+                Assertions.assertEquals("funny-token", token);
             }
         };
-        Registry.init(new Connector(variableAccessor, VariableStorage.create()), loginHandler);
+        Registry.init(connector, loginHandler);
         new Authentication().loginWithToken("funny-token");
     }
 }

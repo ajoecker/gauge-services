@@ -264,7 +264,7 @@ public class Connector {
     }
 
     public Object pathFromPreviousResponse(String variablePath) {
-        return previousResponse.map(pR -> pR.path(prefix(variablePath))).orElseGet(() -> "");
+        return previousResponse.map(pR -> pR.path(prefix(variablePath))).orElse("");
     }
 
     public void assertResponse(String path, Matcher<?> matcher) {

@@ -28,17 +28,7 @@ public class TokenBasedLoginTest {
     @Test
     public void tokenIsGivenNoQueryIsRequired() {
         TokenBasedLogin tokenBasedLogin = new TokenBasedLogin();
-        tokenBasedLogin.loginWithSystemCredentials(new Connector() {
-            @Override
-            public VariableAccessor getVariableAccessor() {
-                return new VariableAccessor() {
-                    @Override
-                    public String token() {
-                        return "12345";
-                    }
-                };
-            }
-        });
+        tokenBasedLogin.loginWithToken("12345");
         tokenBasedLogin.setLogin(requestSpecification);
         verify(preemptiveAuthSpec).oauth2("12345");
     }

@@ -27,7 +27,7 @@ public class BasicAuthenticationTest {
     @Test
     public void givenCredentialsAreSet() {
         BasicAuthentication basicAuthentication = new BasicAuthentication();
-        basicAuthentication.loginWithGivenCredentials("user", "password", null);
+        basicAuthentication.loginWithUserPassword("user", "password", null);
         basicAuthentication.setLogin(requestSpecification);
         verify(preemptiveAuthSpec).basic("user", "password");
     }
@@ -35,7 +35,7 @@ public class BasicAuthenticationTest {
     @Test
     public void noUserGivenDoesNotSetCredentials() {
         BasicAuthentication basicAuthentication = new BasicAuthentication();
-        basicAuthentication.loginWithGivenCredentials(null, "password", null);
+        basicAuthentication.loginWithUserPassword(null, "password", null);
         basicAuthentication.setLogin(requestSpecification);
         verify(preemptiveAuthSpec, never()).basic(null, "password");
     }
@@ -43,7 +43,7 @@ public class BasicAuthenticationTest {
     @Test
     public void noPasswordGivenDoesNotSetCredentials() {
         BasicAuthentication basicAuthentication = new BasicAuthentication();
-        basicAuthentication.loginWithGivenCredentials("user", null, null);
+        basicAuthentication.loginWithUserPassword("user", null, null);
         basicAuthentication.setLogin(requestSpecification);
         Mockito.verify(preemptiveAuthSpec, never()).basic("user", "password");
     }

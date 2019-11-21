@@ -26,7 +26,7 @@ public class BasicAuthentication extends AbstractLoginHandler {
     }
 
     @Override
-    public void loginWithGivenCredentials(String user, String password, Connector connector) {
+    public void loginWithUserPassword(String user, String password, Connector connector) {
         this.user = user;
         this.password = password;
     }

@@ -8,25 +8,24 @@ import com.thoughtworks.gauge.Step;
  * The class {@link Authentication} contains all steps for user authentication.
  */
 public class Authentication extends Service {
-    @Step({"When <user> logs in with password <password>", "And <user> logs in with password <password>"})
+    @Step({"When logging in with <user> and <password>", "And logging in with <user> and <password>"})
     public void loginUserWithPassword(String user, String password) {
-        loginHandler.loginWithGivenCredentials(user, password, connector);
+        loginHandler.loginWithUserPassword(user, password, connector);
     }
 
-    @Step({"When user logs in", "And user logs in"})
+    @Step({"When logging in", "And logging in"})
     public void loginWIthNoCredentials() {
         loginHandler.loginWithSystemCredentials(connector);
     }
 
-    @Step({"When user logs in with <token>", "And user logs in with <token>"})
+    @Step({"When logging in with token <token>", "And logging in with token <token>"})
     public void loginWithToken(String token) {
-        VariableAccessor current = connector.getVariableAccessor();
-        connector.setVariableAccessor(new VariableAccessorDelegate(current) {
-            @Override
-            public String token() {
-                return token;
-            }
-        });
-        loginWIthNoCredentials();
+        loginHandler.loginWithToken(token);
+    }
+
+    @Step({"When logging in with query <query> and <variables> for <tokenPath>",
+            "And logging in with query <query> and <variables> for <tokenPath>"})
+    public void loginWithQuery(String query, String variables, String tokenPath) {
+        loginHandler.loginWithQuery(query, variables, tokenPath, connector);
     }
 }

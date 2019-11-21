@@ -21,12 +21,24 @@ public interface LoginHandler {
      * @param password         the password of the user
      * @param connector the connector to send a possible login query with the credentials
      */
-    void loginWithGivenCredentials(String user, String password, Connector connector);
+    default void loginWithUserPassword(String user, String password, Connector connector) {
+        throw new IllegalCallerException("not implemented for " + this.getClass());
+    }
 
     /**
-     * Logs in with credentials read from the gauge environment instead of given directly as in {@link #loginWithGivenCredentials(String, String, Connector)}
+     * Logs in with credentials read from the gauge environment instead of given directly as in {@link #loginWithUserPassword(String, String, Connector)}
      *
      * @param connector the connector to send a possible login query
      */
-    void loginWithSystemCredentials(Connector connector);
+    default void loginWithSystemCredentials(Connector connector) {
+        throw new IllegalCallerException("not implemented for " + this.getClass());
+    }
+
+    default void loginWithQuery(String query, String variable, String tokenPath, Connector connector) {
+        throw new IllegalCallerException("not implemented for " + this.getClass());
+    }
+
+    default void loginWithToken(String token) {
+        throw new IllegalCallerException("not implemented for " + this.getClass());
+    }
 }

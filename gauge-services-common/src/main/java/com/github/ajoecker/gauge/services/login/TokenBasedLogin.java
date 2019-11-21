@@ -33,34 +33,13 @@ public final class TokenBasedLogin extends AbstractLoginHandler {
     }
 
     @Override
-    public void loginWithSystemCredentials(Connector connector) {
-        loginToken = Optional.ofNullable(connector.getVariableAccessor().token())
-                .orElseGet(() -> sendLoginQuery(connector, UnaryOperator.identity()));
+    public void loginWithToken(String token) {
+        this.loginToken = token;
     }
 
     @Override
-    public void loginWithGivenCredentials(String user, String password, Connector connector) {
-        loginToken = sendLoginQuery(connector, s -> replaceVariablesInQuery(s, "user:" + user + ", password:" + password, connector));
-    }
-
-    private String sendLoginQuery(Connector connector, UnaryOperator<String> queryMapper) {
-        try {
-            connector.post(readQuery(queryMapper, connector.getVariableAccessor().tokenQueryFile()), "");
-            return connector.extract(connector.getVariableAccessor().tokenPath());
-        } catch (URISyntaxException | IOException e) {
-            throw new QueryException(e);
-        }
-    }
-
-    private String readQuery(UnaryOperator<String> mapper, String tokenQueryFile) throws IOException, URISyntaxException {
-        String queryFile = "/" + tokenQueryFile;
-        URI uri = TokenBasedLogin.class.getResource(queryFile).toURI();
-        return mapper.apply(readString(Paths.get(uri)));
-    }
-
-    public static class QueryException extends RuntimeException {
-        public QueryException(Throwable throwable) {
-            super(throwable);
-        }
+    public void loginWithQuery(String query, String variable, String tokenPath, Connector connector) {
+        connector.post(query, variable);
+        loginToken = connector.pathFromPreviousResponse(tokenPath).toString();
     }
 }
