@@ -171,7 +171,7 @@ public class Connector {
         while (matcher.find()) {
             String variableValue = getVariableValue(matcher.group(1).replace(MASK, "").trim());
             String substring = v.substring(matcher.start(1), matcher.end(1));
-            result = result.replace(substring, variableValue);
+            result = result.replace(substring, variableValue.replace("\"", "\\\""));
         }
         return result;
     }
