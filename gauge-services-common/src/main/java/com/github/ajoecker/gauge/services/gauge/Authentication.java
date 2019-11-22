@@ -1,8 +1,6 @@
 package com.github.ajoecker.gauge.services.gauge;
 
 import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.VariableAccessor;
-import com.github.ajoecker.gauge.services.VariableAccessorDelegate;
 import com.thoughtworks.gauge.Step;
 
 /**

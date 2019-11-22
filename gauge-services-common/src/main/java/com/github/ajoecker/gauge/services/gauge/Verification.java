@@ -12,13 +12,12 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.COMMA_SEPARATED;
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.split;
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.empty;
 
 public class Verification extends Service<Connector> {
+    private static final String COMMA_SEPARATED = "\\s*,\\s*";
+
     @Step({"Then <path> contains <value>", "And <path> contains <value>"})
     public void thenContains(String dataPath, Object value) {
         compare(value, connector.thenContains(dataPath));
@@ -37,7 +36,7 @@ public class Verification extends Service<Connector> {
 
     @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})
     public void thenEmpty(String dataPath) {
-        connector.assertResponse(connector.prefix(dataPath), empty());
+        connector.isEmpty(dataPath);
     }
 
     private void compare(Object value, Consumer<Object[]> match) {
@@ -78,5 +77,9 @@ public class Verification extends Service<Connector> {
 
     private Map<String, String> fromTable(TableRow tableRow) {
         return tableRow.getTableCells().stream().collect(Collectors.toMap(TableCell::getColumnName, TableCell::getValue));
+    }
+
+    private static String[] split(String stringValue) {
+        return stringValue.trim().split(COMMA_SEPARATED);
     }
 }

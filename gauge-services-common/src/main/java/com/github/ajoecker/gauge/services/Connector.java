@@ -12,9 +12,9 @@ import org.hamcrest.Matchers;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.*;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -22,7 +22,8 @@ import static org.hamcrest.Matchers.*;
  * Abstraction of a connection to a service. This is the glue to connect and send to a service, e.g. GraphQL or REST
  */
 public class Connector {
-    public static final String NO_PREFIX = "";
+    private static final Pattern compile = Pattern.compile("(%.+?%)");
+    private static final String MASK = "%";
     private final VariableStorage variableStorage;
     private String endpoint;
     private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
@@ -34,13 +35,9 @@ public class Connector {
     }
 
     public Connector(VariableAccessor variableAccessor, VariableStorage variableStorage) {
-        setVariableAccessor(variableAccessor);
+        this.variableAccessor = variableAccessor;
         setEndpoint(variableAccessor.endpoint());
         this.variableStorage = variableStorage;
-    }
-
-    private void setVariableAccessor(VariableAccessor variableAccessor) {
-        this.variableAccessor = variableAccessor;
     }
 
     public VariableAccessor getVariableAccessor() {
@@ -79,25 +76,15 @@ public class Connector {
     }
 
     protected void setPreviousResponse() {
-        setPreviousResponse(response.then().extract());
+        this.previousResponse = Optional.ofNullable(response.then().extract());
     }
 
-    public void setPreviousResponse(ExtractableResponse<Response> previousResponse) {
-        this.previousResponse = Optional.ofNullable(previousResponse);
-    }
-
-    /**
-     * Prefixes the path with the prefix {@link #NO_PREFIX} if the path does not already start with that prefix
-     *
-     * @param dataPath the json path
-     * @return json path with guaranteed {@link #NO_PREFIX} at beginning
-     */
-    public String prefix(String dataPath) {
-        String prefix = NO_PREFIX;
-        if (prefix.length() > 0 && !dataPath.startsWith(prefix)) {
-            return prefix + dataPath;
-        }
+    protected String prefix(String dataPath) {
         return dataPath;
+    }
+
+    public void isEmpty(String dataPath) {
+        assertResponse(prefix(dataPath), empty());
     }
 
     protected RequestSpecification login(LoginHandler loginHandler) {
@@ -116,12 +103,15 @@ public class Connector {
      * @return the {@link Response}
      */
     private Response post(String query, String path, RequestSpecification request) {
-        String postEndpoint = getCompleteEndpoint(replaceVariables(path, this));
-        Object object = bodyFor(query);
-        return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
+        String postEndpoint = getCompleteEndpoint(replaceVariables(path));
+        Object object = bodyFor(replaceVariables(query));
+        return checkDebugPrint(request
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
                 .body(object)
                 .when()
-                .post(postEndpoint));
+                .post(postEndpoint)
+        );
     }
 
     protected String getCompleteEndpoint(String path) {
@@ -170,15 +160,11 @@ public class Connector {
         response.then().statusCode(is(expected));
     }
 
-    public boolean hasPreviousResponse() {
-        return previousResponse.isPresent();
-    }
-
     public Object pathFromPreviousResponse(String variablePath) {
         return previousResponse.map(pR -> pR.path(prefix(variablePath))).orElse("");
     }
 
-    public void assertResponse(String path, Matcher<?> matcher) {
+    private void assertResponse(String path, Matcher<?> matcher) {
         response.then().assertThat().body(prefix(path), matcher);
     }
 
@@ -221,7 +207,7 @@ public class Connector {
     }
 
     private List<String> splitIntoKeyValueList(String s) {
-        return Arrays.stream(s.split(COMMA_SEPARATED))
+        return Arrays.stream(s.split("\\s*,\\s*"))
                 .flatMap(s1 -> Arrays.stream(s1.split("=")))
                 .collect(Collectors.toList());
     }
@@ -230,12 +216,47 @@ public class Connector {
         Iterator<String> iterator = keyValues.iterator();
         while (iterator.hasNext()) {
             String key = iterator.next();
-            String value = iterator.next();
-            if (!target.get(key).equals(replaceVariables(value, this))) {
+            String query = replaceVariables(iterator.next());
+            if (!target.get(key).equals(query)) {
                 return false;
             }
         }
         return true;
+    }
+
+
+    /**
+     * Replaces all variables from the given string by
+     *
+     * <ol>
+     *     <li>Checking the value from {@link com.github.ajoecker.gauge.random.data.VariableStorage}</li>
+     *     <li>Checking the value from a previous response</li>
+     * </ol>
+     *
+     * @param v         the string with variables
+     * @return a replaced string with no variables
+     */
+    protected String replaceVariables(String v) {
+        java.util.regex.Matcher matcher = compile.matcher(v);
+        String result = v;
+        while (matcher.find()) {
+            String variableValue = getVariableValue(matcher.group(1).replace(MASK, "").trim());
+            String substring = v.substring(matcher.start(1), matcher.end(1));
+            result = result.replace(substring, variableValue);
+        }
+        return result;
+    }
+
+    private String getVariableValue(String variable) {
+        Object saved = getFromVariableStorage(variable);
+        if (saved != null) {
+            return saved.toString();
+        }
+        String prev = pathFromPreviousResponse(variable).toString();
+        if (!"".equals(prev)) {
+            return prev;
+        }
+        return variable;
     }
 
     public Object getFromVariableStorage(String toLookFor) {

@@ -65,7 +65,7 @@ public class ServiceTest {
         Table table = new Table(List.of("foo", "bar"));
         table.addRow(List.of("fooValue", "barValue"));
         Registry.init(connector);
-        new POST().postingWithVariables("simple", "", table);
+       // new POST().postingWithVariables("simple", "", table);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class ServiceTest {
         table.addRow(List.of("foo", "fooValue"));
         table.addRow(List.of("bar", "barValue"));
         Registry.init(connector);
-        new POST().postingWithVariables("%foo% : %bar%", "", table);
+      //  new POST().postingWithVariables("%foo% : %bar%", "", table);
     }
 
     @Test
@@ -93,7 +93,7 @@ public class ServiceTest {
         };
         String replacement = "foo=fooValue,bar=barValue";
         Registry.init(connector);
-        new POST().postingWithVariables("%foo% : %bar%", "", replacement);
+        //new POST().postingWithVariables("%foo% : %bar%", "", replacement);
     }
 
     @Test
