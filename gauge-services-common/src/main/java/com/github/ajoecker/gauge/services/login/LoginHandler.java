@@ -1,6 +1,7 @@
 package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.Connector;
+import com.github.ajoecker.gauge.services.common.RequestSender;
 import io.restassured.specification.RequestSpecification;
 
 /**
@@ -30,7 +31,7 @@ public interface LoginHandler {
      *
      * @param connector the connector to send a possible login query
      */
-    default void loginWithSystemCredentials(Connector connector) {
+    default void loginWithSystemCredentials(RequestSender connector) {
         throw new IllegalCallerException("not implemented for " + this.getClass());
     }
 

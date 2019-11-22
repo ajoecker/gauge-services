@@ -1,4 +1,4 @@
-package com.github.ajoecker.gauge.services.gauge;
+package com.github.ajoecker.gauge.services.common;
 
 import com.github.ajoecker.gauge.services.Connector;
 import com.thoughtworks.gauge.Step;
@@ -9,6 +9,7 @@ import com.thoughtworks.gauge.TableRow;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -26,12 +27,8 @@ public class Verification extends Service<Connector> {
     @Step({"Then <path> is <value>", "And <path> is <value>",
             "Then <path> are <value>", "And <path> are <value>"})
     public void thenIs(String dataPath, Object value) {
-        Object extractedCacheValue = connector.getFromVariableStorage(dataPath);
-        if (extractedCacheValue != null) {
-            assertThat(extractedCacheValue.toString()).isEqualTo(value);
-        } else {
-            compare(value, connector.thenIs(dataPath));
-        }
+        Optional<Object> extractedCacheValue = connector.getFromVariableStorage(dataPath);
+        extractedCacheValue.ifPresentOrElse(v -> assertThat(v.toString()).isEqualTo(value), () -> compare(value, connector.thenIs(dataPath)));
     }
 
     @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})

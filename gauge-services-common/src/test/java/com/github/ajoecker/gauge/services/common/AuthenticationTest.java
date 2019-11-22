@@ -1,8 +1,8 @@
-package com.github.ajoecker.gauge.services.gauge;
+package com.github.ajoecker.gauge.services.common;
 
-import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.Registry;
+import com.github.ajoecker.gauge.services.TestVariableStorage;
 import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import io.restassured.specification.RequestSpecification;
@@ -18,7 +18,7 @@ public class AuthenticationTest {
                 return "wrong-token";
             }
         };
-        Connector connector = new Connector(variableAccessor, VariableStorage.create());
+        Connector connector = new Connector(new TestVariableStorage(), new RequestSender(variableAccessor));
         LoginHandler loginHandler = new LoginHandler() {
             @Override
             public void setLogin(RequestSpecification request) {

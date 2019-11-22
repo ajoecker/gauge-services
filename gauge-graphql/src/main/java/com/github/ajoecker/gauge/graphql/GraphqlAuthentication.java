@@ -1,7 +1,7 @@
 package com.github.ajoecker.gauge.graphql;
 
 import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.gauge.Service;
+import com.github.ajoecker.gauge.services.common.Service;
 import com.thoughtworks.gauge.Step;
 
 public class GraphqlAuthentication extends Service<Connector> {

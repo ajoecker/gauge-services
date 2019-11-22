@@ -1,11 +1,11 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.random.data.VariableStorage;
+import com.github.ajoecker.gauge.services.common.RequestSender;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.google.common.base.Strings;
-import io.restassured.http.ContentType;
-import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
@@ -15,7 +15,6 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
@@ -24,33 +23,25 @@ import static org.hamcrest.Matchers.*;
 public class Connector {
     private static final Pattern compile = Pattern.compile("(%.+?%)");
     private static final String MASK = "%";
+    protected final RequestSender requestSender;
     private final VariableStorage variableStorage;
-    private String endpoint;
-    private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
-    protected Response response;
-    private VariableAccessor variableAccessor;
+    private ValidatableResponse response;
 
     public Connector() {
-        this(new VariableAccessor(), VariableStorage.create());
+        this(VariableStorage.create(), new RequestSender(new VariableAccessor()));
     }
 
-    public Connector(VariableAccessor variableAccessor, VariableStorage variableStorage) {
-        this.variableAccessor = variableAccessor;
-        setEndpoint(variableAccessor.endpoint());
+    public Connector(VariableStorage variableStorage, RequestSender requestSender) {
         this.variableStorage = variableStorage;
+        this.requestSender = requestSender;
     }
 
-    public VariableAccessor getVariableAccessor() {
-        return variableAccessor;
+    public RequestSender requestSender() {
+        return requestSender;
     }
 
-    /**
-     * Sets the endpoint, the service is querying
-     *
-     * @param endpoint the endpoint
-     */
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
+    public void setResponse(Response response) {
+        this.response = response.then();
     }
 
     /**
@@ -59,24 +50,7 @@ public class Connector {
      * @param query the query
      */
     public void post(String query) {
-        response = post(query, "", startRequest());
-        setPreviousResponse();
-    }
-
-    /**
-     * Sends a post with the given query and ensures that one is authenticated.
-     *
-     * @param query        the query
-     * @param path         the path to post to
-     * @param loginHandler the {@link LoginHandler} for authentication
-     */
-    public void post(String query, String path, LoginHandler loginHandler) {
-        response = post(query, path, login(loginHandler));
-        setPreviousResponse();
-    }
-
-    protected void setPreviousResponse() {
-        this.previousResponse = Optional.ofNullable(response.then().extract());
+        post(query, "", null);
     }
 
     protected String prefix(String dataPath) {
@@ -87,50 +61,19 @@ public class Connector {
         assertResponse(prefix(dataPath), empty());
     }
 
-    protected RequestSpecification login(LoginHandler loginHandler) {
-        RequestSpecification request = startRequest();
-        loginHandler.setLogin(request);
-        return request;
-    }
-
     /**
      * Sends a post with the given query to the given {@link RequestSpecification}.
      * <p>
      * It also asserts that the status code is 200.
      *
-     * @param query   the query
-     * @param request the request
+     * @param query the query
      * @return the {@link Response}
      */
-    private Response post(String query, String path, RequestSpecification request) {
-        String postEndpoint = getCompleteEndpoint(replaceVariables(path));
+    public Response post(String query, String path, LoginHandler loginHandler) {
+        String postEndpoint = requestSender.getCompleteEndpoint(replaceVariables(path));
         Object object = bodyFor(replaceVariables(query));
-        return checkDebugPrint(request
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body(object)
-                .when()
-                .post(postEndpoint)
-        );
-    }
-
-    protected String getCompleteEndpoint(String path) {
-        return checkTrailingSlash(endpoint, path);
-    }
-
-    protected String checkTrailingSlash(String base, String path) {
-        if (!Strings.isNullOrEmpty(path)) {
-            return !base.endsWith("/") ? base + "/" + path : base + path;
-        }
-        return base;
-    }
-
-    protected Response checkDebugPrint(Response response) {
-        if (variableAccessor.logAll()) {
-            response.then().log().all();
-        } else if (variableAccessor.logFailure()) {
-            response.then().log().ifValidationFails();
-        }
+        Response response = requestSender.sendPost(loginHandler, postEndpoint, object);
+        setResponse(response);
         return response;
     }
 
@@ -146,35 +89,21 @@ public class Connector {
         return query;
     }
 
-    private RequestSpecification startRequest() {
-        RequestSpecification request = given();
-        if (variableAccessor.logAll()) {
-            request.when().log().all();
-        } else if (variableAccessor.logFailure()) {
-            request.when().log().ifValidationFails();
-        }
-        return request;
-    }
-
     public void verifyStatusCode(int expected) {
-        response.then().statusCode(is(expected));
+        response.statusCode(is(expected));
     }
 
-    public Object pathFromPreviousResponse(String variablePath) {
-        return previousResponse.map(pR -> pR.path(prefix(variablePath))).orElse("");
+    public Optional<Object> pathFromPreviousResponse(String variablePath) {
+        return Optional.ofNullable(response.extract().path(prefix(variablePath)));
     }
 
     private void assertResponse(String path, Matcher<?> matcher) {
-        response.then().assertThat().body(prefix(path), matcher);
-    }
-
-    public void clear() {
-        previousResponse = Optional.empty();
+        response.assertThat().body(prefix(path), matcher);
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
         return items -> {
-            if (response.then().extract().path(prefix(dataPath)) instanceof List) {
+            if (response.extract().path(prefix(dataPath)) instanceof List) {
                 assertResponse(dataPath, Matchers.hasItems(items));
             } else {
                 assertResponse(dataPath, Matchers.containsString((String) items[0]));
@@ -184,7 +113,7 @@ public class Connector {
 
     public Consumer<Object[]> thenIs(String dataPath) {
         return items -> {
-            if (response.then().extract().path(prefix(dataPath)) instanceof List) {
+            if (response.extract().path(prefix(dataPath)) instanceof List) {
                 assertResponse(dataPath, containsInAnyOrder(items));
             } else {
                 assertResponse(dataPath, is(items[0]));
@@ -193,12 +122,12 @@ public class Connector {
     }
 
     public void verifyRequestInLessThan(long timeout) {
-        response.then().time(Matchers.lessThanOrEqualTo(timeout));
+        response.time(Matchers.lessThanOrEqualTo(timeout));
     }
 
     public void extract(String variable, String parent, String attributeValue) {
         List<String> keyValueList = splitIntoKeyValueList(attributeValue);
-        Object path = response.then().extract().path(parent);
+        Object path = response.extract().path(parent);
         if (path instanceof List) {
             List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
             Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
@@ -217,7 +146,7 @@ public class Connector {
         while (iterator.hasNext()) {
             String key = iterator.next();
             String query = replaceVariables(iterator.next());
-            if (!target.get(key).equals(query)) {
+            if (!query.equals(target.get(key))) {
                 return false;
             }
         }
@@ -233,7 +162,7 @@ public class Connector {
      *     <li>Checking the value from a previous response</li>
      * </ol>
      *
-     * @param v         the string with variables
+     * @param v the string with variables
      * @return a replaced string with no variables
      */
     protected String replaceVariables(String v) {
@@ -248,18 +177,15 @@ public class Connector {
     }
 
     private String getVariableValue(String variable) {
-        Object saved = getFromVariableStorage(variable);
-        if (saved != null) {
-            return saved.toString();
-        }
-        String prev = pathFromPreviousResponse(variable).toString();
-        if (!"".equals(prev)) {
-            return prev;
-        }
-        return variable;
+        return getFromVariableStorage(variable).map(Object::toString)
+                .orElseGet(() ->
+                        pathFromPreviousResponse(variable)
+                                .map(Object::toString)
+                                .filter(s -> s.length() > 0)
+                                .orElse(variable));
     }
 
-    public Object getFromVariableStorage(String toLookFor) {
+    public Optional<Object> getFromVariableStorage(String toLookFor) {
         return variableStorage.get(toLookFor);
     }
 }

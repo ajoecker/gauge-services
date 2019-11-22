@@ -1,4 +1,4 @@
-package com.github.ajoecker.gauge.services.gauge;
+package com.github.ajoecker.gauge.services.common;
 
 import com.github.ajoecker.gauge.services.Connector;
 import com.thoughtworks.gauge.Step;

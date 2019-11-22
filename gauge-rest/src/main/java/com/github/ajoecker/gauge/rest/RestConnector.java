@@ -1,12 +1,20 @@
 package com.github.ajoecker.gauge.rest;
 
+import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.Connector;
+import com.github.ajoecker.gauge.services.common.RequestSender;
 import com.github.ajoecker.gauge.services.login.LoginHandler;
 import com.google.common.base.Strings;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
 
 public class RestConnector extends Connector {
+    public RestConnector() {
+        super();
+    }
+
+    public RestConnector(VariableStorage variableStorage, RequestSender requestSender) {
+        super(variableStorage, requestSender);
+    }
+
     /**
      * Sends a get with the given query and ensures that one is authenticated.
      *
@@ -15,16 +23,11 @@ public class RestConnector extends Connector {
      * @param loginHandler the {@link LoginHandler} for authentication
      */
     void get(String resource, String parameter, LoginHandler loginHandler) {
-        String queryPath = replaceVariables(getCompleteEndpoint(resource));
+        String queryPath = replaceVariables(requestSender.getCompleteEndpoint(resource));
         if (!Strings.isNullOrEmpty(parameter)) {
             queryPath = queryPath + "?" + parameter;
         }
-        response = checkDebugPrint(login(loginHandler)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .when()
-                .get(queryPath));
-        setPreviousResponse();
+        setResponse(requestSender.sendGet(loginHandler, queryPath));
     }
 
     /**
@@ -34,20 +37,14 @@ public class RestConnector extends Connector {
      * @param loginHandler the {@link LoginHandler} for authentication
      */
     void put(String query, String path, LoginHandler loginHandler) {
-        String theEndpoint = getCompleteEndpoint(replaceVariables(path));
+        String theEndpoint = requestSender.getCompleteEndpoint(replaceVariables(path));
         Object object = bodyFor(replaceVariables(query));
-        response = checkDebugPrint(login(loginHandler)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body(object)
-                .when()
-                .put(theEndpoint));
-        setPreviousResponse();
+        setResponse(requestSender.sendPut(loginHandler, theEndpoint, object));
     }
 
     void deleteWithLogin(String query, String path, LoginHandler loginHandler) {
-        String deletePath = checkTrailingSlash(getCompleteEndpoint(path), replaceVariables(query));
-        response = checkDebugPrint(login(loginHandler).delete(deletePath));
-        setPreviousResponse();
+        String base = requestSender.getCompleteEndpoint(replaceVariables(path));
+        String deletePath = requestSender.checkTrailingSlash(base, replaceVariables(query));
+        setResponse(requestSender.sendDelete(loginHandler, deletePath));
     }
 }

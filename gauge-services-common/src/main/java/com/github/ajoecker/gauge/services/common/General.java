@@ -1,7 +1,6 @@
-package com.github.ajoecker.gauge.services.gauge;
+package com.github.ajoecker.gauge.services.common;
 
 import com.github.ajoecker.gauge.services.Connector;
-import com.thoughtworks.gauge.AfterScenario;
 import com.thoughtworks.gauge.Step;
 
 /**
@@ -38,11 +37,6 @@ public class General extends Service<Connector> {
 
     @Step("Given the endpoint <endpoint>")
     public void useEndpoint(String endpoint) {
-        connector.setEndpoint(endpoint);
-    }
-
-    @AfterScenario
-    public void clearResponse() {
-        connector.clear();
+        connector.requestSender().setEndpoint(endpoint);
     }
 }

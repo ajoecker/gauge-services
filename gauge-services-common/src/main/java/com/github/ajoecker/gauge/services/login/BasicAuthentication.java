@@ -2,6 +2,7 @@ package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.VariableAccessor;
+import com.github.ajoecker.gauge.services.common.RequestSender;
 import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
 
@@ -38,7 +39,7 @@ public class BasicAuthentication implements LoginHandler {
     }
 
     @Override
-    public void loginWithSystemCredentials(Connector connector) {
+    public void loginWithSystemCredentials(RequestSender connector) {
         VariableAccessor variableAccessor = connector.getVariableAccessor();
         this.user = variableAccessor.user();
         this.password = variableAccessor.password();
