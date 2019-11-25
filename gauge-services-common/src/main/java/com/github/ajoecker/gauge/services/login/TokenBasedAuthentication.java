@@ -4,6 +4,8 @@ import com.github.ajoecker.gauge.services.Connector;
 import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
 
+import java.util.Optional;
+
 /**
  * A {@link AuthenticationHandler} that works based on a token.
  * <p>
@@ -30,6 +32,6 @@ public final class TokenBasedAuthentication implements AuthenticationHandler {
     @Override
     public void loginWithQuery(String query, String tokenPath, Connector connector) {
         connector.post(query);
-        loginToken = connector.fromLatestResponse(tokenPath).toString();
+        loginToken = connector.fromLatestResponse(tokenPath).map(Object::toString).orElse("");
     }
 }
