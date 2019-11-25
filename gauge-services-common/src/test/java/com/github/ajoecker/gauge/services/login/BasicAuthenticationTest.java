@@ -1,7 +1,9 @@
 package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.Connector;
+import com.github.ajoecker.gauge.services.TestVariableStorage;
 import com.github.ajoecker.gauge.services.VariableAccessor;
+import com.github.ajoecker.gauge.services.common.Sender;
 import io.restassured.specification.AuthenticationSpecification;
 import io.restassured.specification.PreemptiveAuthSpec;
 import io.restassured.specification.RequestSpecification;
@@ -27,7 +29,7 @@ public class BasicAuthenticationTest {
     @Test
     public void givenCredentialsAreSet() {
         BasicAuthentication basicAuthentication = new BasicAuthentication();
-        basicAuthentication.loginWithGivenCredentials("user", "password", null);
+        basicAuthentication.loginWithUserPassword("user", "password", null);
         basicAuthentication.setLogin(requestSpecification);
         verify(preemptiveAuthSpec).basic("user", "password");
     }
@@ -35,7 +37,7 @@ public class BasicAuthenticationTest {
     @Test
     public void noUserGivenDoesNotSetCredentials() {
         BasicAuthentication basicAuthentication = new BasicAuthentication();
-        basicAuthentication.loginWithGivenCredentials(null, "password", null);
+        basicAuthentication.loginWithUserPassword(null, "password", null);
         basicAuthentication.setLogin(requestSpecification);
         verify(preemptiveAuthSpec, never()).basic(null, "password");
     }
@@ -43,7 +45,7 @@ public class BasicAuthenticationTest {
     @Test
     public void noPasswordGivenDoesNotSetCredentials() {
         BasicAuthentication basicAuthentication = new BasicAuthentication();
-        basicAuthentication.loginWithGivenCredentials("user", null, null);
+        basicAuthentication.loginWithUserPassword("user", null, null);
         basicAuthentication.setLogin(requestSpecification);
         Mockito.verify(preemptiveAuthSpec, never()).basic("user", "password");
     }
@@ -51,22 +53,20 @@ public class BasicAuthenticationTest {
     @Test
     public void credentialsLoadFromSysEnv() {
         BasicAuthentication basicAuthentication = new BasicAuthentication();
-        basicAuthentication.loginWithSystemCredentials(new Connector() {
+        VariableAccessor variableAccessor = new VariableAccessor() {
             @Override
-            public VariableAccessor getVariableAccessor() {
-                return new VariableAccessor() {
-                    @Override
-                    public String user() {
-                        return "user";
-                    }
-
-                    @Override
-                    public String password() {
-                        return "password";
-                    }
-                };
+            public String user() {
+                return "user";
             }
-        });
+
+            @Override
+            public String password() {
+                return "password";
+            }
+        };
+        Sender sender = new Sender(variableAccessor);
+        new Connector(new TestVariableStorage(), sender);
+        basicAuthentication.loginWithSystemCredentials(sender);
         basicAuthentication.setLogin(requestSpecification);
         Mockito.verify(preemptiveAuthSpec).basic("user", "password");
     }

@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.github.ajoecker</groupId>
         <artifactId>gauge-services</artifactId>
-        <version>0.3.3</version>
+        <version>0.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -16,6 +16,11 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>gauge-services-common</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.25</version>
         </dependency>
     </dependencies>
 </project>

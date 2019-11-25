@@ -1,5 +1,6 @@
-package com.github.ajoecker.gauge.services.gauge;
+package com.github.ajoecker.gauge.services.common;
 
+import com.github.ajoecker.gauge.services.Connector;
 import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
@@ -8,16 +9,16 @@ import com.thoughtworks.gauge.TableRow;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.*;
-import static com.thoughtworks.gauge.datastore.DataStoreFactory.getScenarioDataStore;
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.empty;
 
-public class Verification extends Service {
+public final class Verification extends Service<Connector> {
+    private static final String COMMA_SEPARATED = "\\s*,\\s*";
+
     @Step({"Then <path> contains <value>", "And <path> contains <value>"})
     public void thenContains(String dataPath, Object value) {
         compare(value, connector.thenContains(dataPath));
@@ -26,17 +27,13 @@ public class Verification extends Service {
     @Step({"Then <path> is <value>", "And <path> is <value>",
             "Then <path> are <value>", "And <path> are <value>"})
     public void thenIs(String dataPath, Object value) {
-        Object extractedCacheValue = connector.getFromVariableStorage(dataPath);
-        if (extractedCacheValue != null) {
-            assertThat(extractedCacheValue.toString()).isEqualTo(value);
-        } else {
-            compare(value, connector.thenIs(dataPath));
-        }
+        Optional<Object> extractedCacheValue = connector.getFromVariableStorage(dataPath);
+        extractedCacheValue.ifPresentOrElse(v -> assertThat(v.toString()).isEqualTo(value), () -> compare(value, connector.thenIs(dataPath)));
     }
 
     @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})
     public void thenEmpty(String dataPath) {
-        connector.assertResponse(connector.prefix(dataPath), empty());
+        connector.isEmpty(dataPath);
     }
 
     private void compare(Object value, Consumer<Object[]> match) {
@@ -77,5 +74,9 @@ public class Verification extends Service {
 
     private Map<String, String> fromTable(TableRow tableRow) {
         return tableRow.getTableCells().stream().collect(Collectors.toMap(TableCell::getColumnName, TableCell::getValue));
+    }
+
+    private static String[] split(String stringValue) {
+        return stringValue.trim().split(COMMA_SEPARATED);
     }
 }

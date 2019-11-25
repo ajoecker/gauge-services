@@ -3,6 +3,7 @@ package com.github.ajoecker.gauge.graphql;
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.Registry;
 import com.thoughtworks.gauge.BeforeSuite;
+import org.yaml.snakeyaml.Yaml;
 
 import java.util.Map;
 
@@ -11,12 +12,12 @@ public class GraphQLSetup {
     public void before() {
         Registry.init(new Connector() {
             @Override
-            protected Object bodyFor(String query, String variables) {
-                return Map.of("query", query, "variables", variables);
+            protected Object bodyFor(String query) {
+                return new Yaml().<Map<String, Object>>load(query);
             }
 
             @Override
-            protected String withPrefix() {
+            public String prefix() {
                 return "data.";
             }
         });
