@@ -9,6 +9,6 @@ import com.thoughtworks.gauge.Step;
 public class Authentication extends Service<Connector> {
     @Step({"When logging in with token <token>", "And logging in with token <token>"})
     public void loginWithToken(String token) {
-        loginHandler.loginWithToken(token);
+        authenticationHandler.loginWithToken(token);
     }
 }

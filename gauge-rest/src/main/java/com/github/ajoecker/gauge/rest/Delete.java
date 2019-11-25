@@ -9,11 +9,11 @@ import com.thoughtworks.gauge.Step;
 public class Delete extends Service<RestConnector> {
     @Step({"When deleting <query>", "And deleting <query>"})
     public void delete(String query) {
-        connector.deleteWithLogin(query, "", loginHandler);
+        connector.deleteWithLogin(query, "", authenticationHandler);
     }
 
     @Step({"When deleting <query> from <path>", "And deleting <query> from <path>"})
     public void delete(String query, String path) {
-        connector.deleteWithLogin(query, path, loginHandler);
+        connector.deleteWithLogin(query, path, authenticationHandler);
     }
 }

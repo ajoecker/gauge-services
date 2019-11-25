@@ -9,11 +9,11 @@ import com.thoughtworks.gauge.Step;
 public class PUT extends Service<RestConnector> {
     @Step({"When putting <query>", "And putting <query>"})
     public void putting(String query) {
-        connector.put(query, "", loginHandler);
+        connector.put(query, "", authenticationHandler);
     }
 
     @Step({"When putting <query> to <path>", "And putting <query> to <path>"})
     public void putting(String query, String path) {
-        connector.put(query, path, loginHandler);
+        connector.put(query, path, authenticationHandler);
     }
 }

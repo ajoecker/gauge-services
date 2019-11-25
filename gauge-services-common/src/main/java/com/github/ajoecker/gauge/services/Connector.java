@@ -1,12 +1,10 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.random.data.VariableStorage;
-import com.github.ajoecker.gauge.services.common.RequestSender;
-import com.github.ajoecker.gauge.services.login.LoginHandler;
-import com.google.common.base.Strings;
+import com.github.ajoecker.gauge.services.common.Sender;
+import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
-import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
@@ -23,21 +21,21 @@ import static org.hamcrest.Matchers.*;
 public class Connector {
     private static final Pattern compile = Pattern.compile("(%.+?%)");
     private static final String MASK = "%";
-    protected final RequestSender requestSender;
+    protected final Sender theSender;
     private final VariableStorage variableStorage;
     private ValidatableResponse response;
 
     public Connector() {
-        this(VariableStorage.create(), new RequestSender(new VariableAccessor()));
+        this(VariableStorage.create(), new Sender(new VariableAccessor()));
     }
 
-    public Connector(VariableStorage variableStorage, RequestSender requestSender) {
+    public Connector(VariableStorage variableStorage, Sender sender) {
         this.variableStorage = variableStorage;
-        this.requestSender = requestSender;
+        this.theSender = sender;
     }
 
-    public RequestSender requestSender() {
-        return requestSender;
+    public Sender requestSender() {
+        return theSender;
     }
 
     public void setResponse(Response response) {
@@ -45,7 +43,7 @@ public class Connector {
     }
 
     /**
-     * Sends a post with the given query and variables
+     * Sends a post with the given query
      *
      * @param query the query
      */
@@ -53,28 +51,38 @@ public class Connector {
         post(query, "", null);
     }
 
+    /**
+     * Returns the prefix for the given data path, as some services will require a certain structure in the response,
+     * like graphql's <code>data</code>
+     *
+     * @param dataPath the path in the response
+     * @return the prefixed path. The default implementation returns simply the given path.
+     */
     protected String prefix(String dataPath) {
         return dataPath;
     }
 
+    /**
+     * Asserts that the given path is empty
+     *
+     * @param dataPath the path to check
+     */
     public void isEmpty(String dataPath) {
         assertResponse(prefix(dataPath), empty());
     }
 
     /**
-     * Sends a post with the given query to the given {@link RequestSpecification}.
-     * <p>
-     * It also asserts that the status code is 200.
+     * Sends a post with the given query and ensures that one is logged in, if required.
      *
-     * @param query the query
-     * @return the {@link Response}
+     * @param query                 the query
+     * @param path                  the resource the post is send to
+     * @param authenticationHandler the {@link AuthenticationHandler} to ensure authentication
      */
-    public Response post(String query, String path, LoginHandler loginHandler) {
-        String postEndpoint = requestSender.getCompleteEndpoint(replaceVariables(path));
+    public void post(String query, String path, AuthenticationHandler authenticationHandler) {
+        String postEndpoint = theSender.getCompleteEndpoint(replaceVariables(path));
         Object object = bodyFor(replaceVariables(query));
-        Response response = requestSender.sendPost(loginHandler, postEndpoint, object);
+        Response response = theSender.sendPost(authenticationHandler, postEndpoint, object);
         setResponse(response);
-        return response;
     }
 
     /**
@@ -93,7 +101,13 @@ public class Connector {
         response.statusCode(is(expected));
     }
 
-    public Optional<Object> pathFromPreviousResponse(String variablePath) {
+    /**
+     * Returns the value of the given path from the latest response if existing.
+     *
+     * @param variablePath the path to look for
+     * @return the found value
+     */
+    public Optional<Object> fromLatestResponse(String variablePath) {
         return Optional.ofNullable(response.extract().path(prefix(variablePath)));
     }
 
@@ -125,14 +139,25 @@ public class Connector {
         response.time(Matchers.lessThanOrEqualTo(timeout));
     }
 
+    /**
+     * Extracts the value of the of the given <code>variable</code> from the latest response, where the given
+     * <code>attributeValue</code> is matching.
+     * <p>
+     * Like <code>extract 'id' from 'customer' where 'email=john.doe@gmail.com'</code>
+     *
+     * @param variable
+     * @param parent
+     * @param attributeValue
+     */
     public void extract(String variable, String parent, String attributeValue) {
         List<String> keyValueList = splitIntoKeyValueList(attributeValue);
-        Object path = response.extract().path(parent);
-        if (path instanceof List) {
-            List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
+        Optional<Object> optionalParent = fromLatestResponse(parent);
+
+        optionalParent.filter(List.class::isInstance).ifPresent(enclosing -> {
+            List<Map<Object, Object>> theList = (List<Map<Object, Object>>) enclosing;
             Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
             first.ifPresent(f -> variableStorage.put(variable, f.get(variable)));
-        }
+        });
     }
 
     private List<String> splitIntoKeyValueList(String s) {
@@ -161,6 +186,8 @@ public class Connector {
      *     <li>Checking the value from {@link com.github.ajoecker.gauge.random.data.VariableStorage}</li>
      *     <li>Checking the value from a previous response</li>
      * </ol>
+     * <p>
+     * In case the replaced value contains <code>"</code>, these get masks <code>\"</code>
      *
      * @param v the string with variables
      * @return a replaced string with no variables
@@ -179,7 +206,7 @@ public class Connector {
     private String getVariableValue(String variable) {
         return getFromVariableStorage(variable).map(Object::toString)
                 .orElseGet(() ->
-                        pathFromPreviousResponse(variable)
+                        fromLatestResponse(variable)
                                 .map(Object::toString)
                                 .filter(s -> s.length() > 0)
                                 .orElse(variable));

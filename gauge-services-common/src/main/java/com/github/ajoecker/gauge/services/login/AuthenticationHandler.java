@@ -1,13 +1,13 @@
 package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.common.RequestSender;
+import com.github.ajoecker.gauge.services.common.Sender;
 import io.restassured.specification.RequestSpecification;
 
 /**
  * Handles the login for a graphql query.
  */
-public interface LoginHandler {
+public interface AuthenticationHandler {
     /**
      * Sets the login information for the given request
      *
@@ -31,7 +31,7 @@ public interface LoginHandler {
      *
      * @param connector the connector to send a possible login query
      */
-    default void loginWithSystemCredentials(RequestSender connector) {
+    default void loginWithSystemCredentials(Sender connector) {
         throw new IllegalCallerException("not implemented for " + this.getClass());
     }
 

@@ -9,6 +9,6 @@ import com.thoughtworks.gauge.Step;
 public class POST extends Service<Connector> {
     @Step({"When posting <query>", "And posting <query>"})
     public void posting(String query) {
-        connector.post(query, "", loginHandler);
+        connector.post(query, "", authenticationHandler);
     }
 }

@@ -1,7 +1,7 @@
 package com.github.ajoecker.gauge.services.common;
 
 import com.github.ajoecker.gauge.services.VariableAccessor;
-import com.github.ajoecker.gauge.services.login.LoginHandler;
+import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
@@ -10,49 +10,49 @@ import io.restassured.specification.RequestSpecification;
 
 import static io.restassured.RestAssured.given;
 
-public class RequestSender {
+public class Sender {
     private VariableAccessor variableAccessor;
     private String endpoint;
 
-    public RequestSender(VariableAccessor variableAccessor) {
+    public Sender(VariableAccessor variableAccessor) {
         this.variableAccessor = variableAccessor;
         this.endpoint = variableAccessor.endpoint();
     }
 
-    protected RequestSpecification login(LoginHandler loginHandler) {
+    protected RequestSpecification login(AuthenticationHandler authenticationHandler) {
         RequestSpecification request = startRequest();
-        if (loginHandler != null) {
-            loginHandler.setLogin(request);
+        if (authenticationHandler != null) {
+            authenticationHandler.setLogin(request);
         }
         return request;
     }
 
-    public Response sendDelete(LoginHandler loginHandler, String deletePath) {
-        return checkDebugPrint(login(loginHandler).delete(deletePath));
+    public Response sendDelete(AuthenticationHandler authenticationHandler, String deletePath) {
+        return checkDebugPrint(login(authenticationHandler).delete(deletePath));
     }
 
-    public Response sendGet(LoginHandler loginHandler, String queryPath) {
-        return send(rs -> rs.get(queryPath), loginHandler);
+    public Response sendGet(AuthenticationHandler authenticationHandler, String queryPath) {
+        return send(rs -> rs.get(queryPath), authenticationHandler);
     }
 
-    private Response send(Function<RequestSpecification, Response> call, Object body, LoginHandler loginHandler) {
-        return checkDebugPrint(call.apply(initRequest(loginHandler).body(body).when()));
+    private Response send(Function<RequestSpecification, Response> call, Object body, AuthenticationHandler authenticationHandler) {
+        return checkDebugPrint(call.apply(initRequest(authenticationHandler).body(body).when()));
     }
 
-    public Response sendPut(LoginHandler loginHandler, String theEndpoint, Object object) {
-        return send(rs -> rs.put(theEndpoint), object, loginHandler);
+    public Response sendPut(AuthenticationHandler authenticationHandler, String theEndpoint, Object object) {
+        return send(rs -> rs.put(theEndpoint), object, authenticationHandler);
     }
 
-    public Response sendPost(LoginHandler loginHandler, String endpoint, Object body) {
-        return send(rs -> rs.post(endpoint), body, loginHandler);
+    public Response sendPost(AuthenticationHandler authenticationHandler, String endpoint, Object body) {
+        return send(rs -> rs.post(endpoint), body, authenticationHandler);
     }
 
-    private Response send(Function<RequestSpecification, Response> call, LoginHandler loginHandler) {
-        return checkDebugPrint(call.apply(initRequest(loginHandler).when()));
+    private Response send(Function<RequestSpecification, Response> call, AuthenticationHandler authenticationHandler) {
+        return checkDebugPrint(call.apply(initRequest(authenticationHandler).when()));
     }
 
-    private RequestSpecification initRequest(LoginHandler loginHandler) {
-        return login(loginHandler).contentType(ContentType.JSON).accept(ContentType.JSON);
+    private RequestSpecification initRequest(AuthenticationHandler authenticationHandler) {
+        return login(authenticationHandler).contentType(ContentType.JSON).accept(ContentType.JSON);
     }
 
     private RequestSpecification startRequest() {

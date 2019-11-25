@@ -20,17 +20,17 @@ import static org.mockito.Mockito.when;
 
 public class ExtractTest {
     private TestVariableStorage testVariableStorage;
-    private RequestSender requestSender;
+    private Sender sender;
 
     @BeforeEach
     public void before() {
         testVariableStorage = new TestVariableStorage();
-        requestSender = new RequestSender(new VariableAccessor());
+        sender = new Sender(new VariableAccessor());
     }
 
     @Test
     public void foo() {
-        initConnector(new Connector(testVariableStorage, requestSender), "");
+        initConnector(new Connector(testVariableStorage, sender), "");
         new Extract().extractPath("token", "id=5");
         assertExtractToken("foo");
     }
@@ -38,16 +38,16 @@ public class ExtractTest {
     @Test
     public void bar() {
         testVariableStorage.put("id", "2");
-        initConnector(new Connector(testVariableStorage, requestSender), "");
+        initConnector(new Connector(testVariableStorage, sender), "");
         new Extract().extractPath("token", "id=%id%");
         assertExtractToken("bar");
     }
 
     @Test
     public void foobar() {
-        initConnector(new Connector(testVariableStorage, requestSender) {
+        initConnector(new Connector(testVariableStorage, sender) {
             @Override
-            public Optional<Object> pathFromPreviousResponse(String variablePath) {
+            public Optional<Object> fromLatestResponse(String variablePath) {
                 return Optional.of("2");
             }
         }, "parent");
