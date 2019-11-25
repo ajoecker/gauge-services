@@ -4,25 +4,15 @@ import com.github.ajoecker.gauge.services.Connector;
 import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.function.UnaryOperator;
-
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.replaceVariablesInQuery;
-import static java.nio.file.Files.readString;
-
 /**
- * A {@link LoginHandler} that works based on a token.
+ * A {@link AuthenticationHandler} that works based on a token.
  * <p>
  * The token can be either stated directly in the gauge environment via the configuration <code>gauge.service.token</code>
  * <p>
  * Or the token can be dynamically queried, when the configurations <code>gauge.service.token.query</code> (the file
  * with the query to login) and <code>gauge.service.token.path</code> (the jsonpath to the token in the response) are given.
  */
-public final class TokenBasedLogin extends AbstractLoginHandler {
+public final class TokenBasedAuthentication implements AuthenticationHandler {
     private String loginToken;
 
     @Override
@@ -38,8 +28,8 @@ public final class TokenBasedLogin extends AbstractLoginHandler {
     }
 
     @Override
-    public void loginWithQuery(String query, String variable, String tokenPath, Connector connector) {
-        connector.post(query, variable);
-        loginToken = connector.pathFromPreviousResponse(tokenPath).toString();
+    public void loginWithQuery(String query, String tokenPath, Connector connector) {
+        connector.post(query);
+        loginToken = connector.fromLatestResponse(tokenPath).toString();
     }
 }

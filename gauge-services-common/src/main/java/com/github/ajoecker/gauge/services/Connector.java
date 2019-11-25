@@ -1,218 +1,88 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.random.data.VariableStorage;
-import com.github.ajoecker.gauge.services.gauge.ServiceUtil;
-import com.github.ajoecker.gauge.services.login.LoginHandler;
-import com.google.common.base.Strings;
-import io.restassured.http.ContentType;
-import io.restassured.response.ExtractableResponse;
+import com.github.ajoecker.gauge.services.common.Sender;
+import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
+import io.restassured.response.ValidatableResponse;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.github.ajoecker.gauge.services.gauge.ServiceUtil.*;
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
  * Abstraction of a connection to a service. This is the glue to connect and send to a service, e.g. GraphQL or REST
  */
 public class Connector {
-    public static final String NO_PREFIX = "";
+    private static final Pattern compile = Pattern.compile("(%.+?%)");
+    private static final String MASK = "%";
+    protected final Sender theSender;
     private final VariableStorage variableStorage;
-    private String endpoint;
-    private Optional<ExtractableResponse<Response>> previousResponse = Optional.empty();
-    private Response response;
-    private VariableAccessor variableAccessor;
+    private ValidatableResponse response;
 
     public Connector() {
-        this(new VariableAccessor(), VariableStorage.create());
+        this(VariableStorage.create(), new Sender(new VariableAccessor()));
     }
 
-    public Connector(VariableAccessor variableAccessor, VariableStorage variableStorage) {
-        setVariableAccessor(variableAccessor);
-        setEndpoint(variableAccessor.endpoint());
+    public Connector(VariableStorage variableStorage, Sender sender) {
         this.variableStorage = variableStorage;
+        this.theSender = sender;
     }
 
-    public void setVariableAccessor(VariableAccessor variableAccessor) {
-        this.variableAccessor = variableAccessor;
+    public Sender requestSender() {
+        return theSender;
     }
 
-    public VariableAccessor getVariableAccessor() {
-        return variableAccessor;
-    }
-
-    /**
-     * Sets the endpoint, the service is querying
-     *
-     * @param endpoint the endpoint
-     */
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-    }
-
-    public String extract(String path) {
-        return response.then().extract().path(prefix(path));
+    public void setResponse(Response response) {
+        this.response = response.then();
     }
 
     /**
-     * Sends a post with the given query and variables
-     *
-     * @param query     the query
-     * @param variables the variables
-     */
-    public void post(String query, String variables) {
-        response = post(query, variables, "", startRequest());
-        setPreviousResponse();
-    }
-
-    /**
-     * Sends a get with the given query
+     * Sends a post with the given query
      *
      * @param query the query
-     * @return the response of the get query
      */
-    public final Response get(String query) {
-        return get(query, "", startRequest());
+    public void post(String query) {
+        post(query, "", null);
     }
 
     /**
-     * Sends a post with the given query and ensures that one is authenticated.
+     * Returns the prefix for the given data path, as some services will require a certain structure in the response,
+     * like graphql's <code>data</code>
      *
-     * @param query        the query
-     * @param variables    the variables
-     * @param path         the path to post to
-     * @param loginHandler the {@link LoginHandler} for authentication
+     * @param dataPath the path in the response
+     * @return the prefixed path. The default implementation returns simply the given path.
      */
-    public void post(String query, String variables, String path, LoginHandler loginHandler) {
-        response = post(query, variables, path, login(loginHandler));
-        setPreviousResponse();
-    }
-
-    private void setPreviousResponse() {
-        setPreviousResponse(response.then().extract());
-    }
-
-    public void setPreviousResponse(ExtractableResponse<Response> previousResponse) {
-        this.previousResponse = Optional.ofNullable(previousResponse);
-    }
-
-    /**
-     * Returns the prefix all paths of a responses must start with.
-     * <p>
-     * Default is an empty string.
-     *
-     * @return the prefix
-     */
-    protected String withPrefix() {
-        return NO_PREFIX;
-    }
-
-    /**
-     * Prefixes the path with the prefix ({@link #withPrefix()}) if the path does not already start with that prefix
-     *
-     * @param dataPath the json path
-     * @return json path with guaranteed {@link #withPrefix()} at beginning
-     */
-    public String prefix(String dataPath) {
-        String prefix = withPrefix();
-        if (prefix.length() > 0 && !dataPath.startsWith(prefix)) {
-            return prefix + dataPath;
-        }
+    protected String prefix(String dataPath) {
         return dataPath;
     }
 
     /**
-     * Sends a get with the given query and ensures that one is authenticated.
+     * Asserts that the given path is empty
      *
-     * @param resource     the query
-     * @param parameter    optional parameters of the query, empty string if non available
-     * @param loginHandler the {@link LoginHandler} for authentication
+     * @param dataPath the path to check
      */
-    public void get(String resource, String parameter, LoginHandler loginHandler) {
-        resource = replaceVariables(resource, this);
-        response = get(resource, parameter, login(loginHandler));
-        setPreviousResponse();
-    }
-
-
-    public void deleteWithLogin(String query, String path, LoginHandler loginHandler) {
-        RequestSpecification request = login(loginHandler);
-        String realQuery = replaceVariables(query, this);
-        response = checkDebugPrint(request.delete(checkTrailingSlash(getCompleteEndpoint(path), realQuery)));
-        setPreviousResponse();
-    }
-
-    private RequestSpecification login(LoginHandler loginHandler) {
-        RequestSpecification request = startRequest();
-        loginHandler.setLogin(request);
-        return request;
+    public void isEmpty(String dataPath) {
+        assertResponse(prefix(dataPath), empty());
     }
 
     /**
-     * Sends a post with the given query to the given {@link RequestSpecification}.
-     * <p>
-     * It also asserts that the status code is 200.
+     * Sends a post with the given query and ensures that one is logged in, if required.
      *
-     * @param query   the query
-     * @param request the request
-     * @return the {@link Response}
+     * @param query                 the query
+     * @param path                  the resource the post is send to
+     * @param authenticationHandler the {@link AuthenticationHandler} to ensure authentication
      */
-    private Response post(String query, String variables, String path, RequestSpecification request) {
-        String postEndpoint = getCompleteEndpoint(replaceVariables(path, this));
-        Object object = bodyFor(query, variables);
-        return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
-                .body(object)
-                .when()
-                .post(postEndpoint));
-    }
-
-    /**
-     * Sends a get with the given query and ensures that one is authenticated.
-     *
-     * @param query        the query
-     * @param parameter    optional parameters of the query, empty string if non available
-     * @param loginHandler the {@link LoginHandler} for authentication
-     */
-    public void put(String query, String parameter, String path, LoginHandler loginHandler) {
-        query = replaceVariables(query, this);
-        response = put(query, parameter, path, login(loginHandler));
-        setPreviousResponse();
-    }
-
-    private Response put(String query, String parameter, String path, RequestSpecification request) {
-        String theEndpoint = getCompleteEndpoint(replaceVariables(path, this));
-        Object object = bodyFor(query, parameter);
-        return checkDebugPrint(request.contentType(ContentType.JSON).accept(ContentType.JSON)
-                .body(object)
-                .when()
-                .put(theEndpoint));
-    }
-
-    private String getCompleteEndpoint(String path) {
-        return checkTrailingSlash(endpoint, path);
-    }
-
-    private String checkTrailingSlash(String base, String path) {
-        if (!Strings.isNullOrEmpty(path)) {
-            return !base.endsWith("/") ? base + "/" + path : base + path;
-        }
-        return base;
-    }
-
-    private Response checkDebugPrint(Response response) {
-        if (variableAccessor.logAll()) {
-            response.then().log().all();
-        } else if (variableAccessor.logFailure()) {
-            response.then().log().ifValidationFails();
-        }
-        return response;
+    public void post(String query, String path, AuthenticationHandler authenticationHandler) {
+        String postEndpoint = theSender.getCompleteEndpoint(replaceVariables(path));
+        Object object = bodyFor(replaceVariables(query));
+        Response response = theSender.sendPost(authenticationHandler, postEndpoint, object);
+        setResponse(response);
     }
 
     /**
@@ -220,64 +90,34 @@ public class Connector {
      * <p>
      * Default method simply returns the query and applies no changes
      *
-     * @param query     the query
-     * @param variables the variables, empty string if no variables available
+     * @param query the query
      * @return the formatted object for the request
      */
-    protected Object bodyFor(String query, String variables) {
+    protected Object bodyFor(String query) {
         return query;
     }
 
-    /**
-     * Sends a get with the given query to the given {@link RequestSpecification}
-     *
-     * @param query   the query
-     * @param request the request
-     * @return the {@link Response}
-     */
-    private Response get(String query, String parameters, RequestSpecification request) {
-        String queryPath = getCompleteEndpoint(query);
-        if (!Strings.isNullOrEmpty(parameters)) {
-            queryPath = queryPath + "?" + parameters;
-        }
-        return checkDebugPrint(request.contentType(ContentType.JSON)
-                .when()
-                .get(queryPath));
-    }
-
-    private RequestSpecification startRequest() {
-        RequestSpecification request = given();
-        if (variableAccessor.logAll()) {
-            request.when().log().all();
-        } else if (variableAccessor.logFailure()) {
-            request.when().log().ifValidationFails();
-        }
-        return request;
-    }
-
     public void verifyStatusCode(int expected) {
-        response.then().statusCode(is(expected));
+        response.statusCode(is(expected));
     }
 
-    public boolean hasPreviousResponse() {
-        return previousResponse.isPresent();
+    /**
+     * Returns the value of the given path from the latest response if existing.
+     *
+     * @param variablePath the path to look for
+     * @return the found value
+     */
+    public Optional<Object> fromLatestResponse(String variablePath) {
+        return Optional.ofNullable(response.extract().path(prefix(variablePath)));
     }
 
-    public Object pathFromPreviousResponse(String variablePath) {
-        return previousResponse.map(pR -> pR.path(prefix(variablePath))).orElse("");
-    }
-
-    public void assertResponse(String path, Matcher<?> matcher) {
-        response.then().assertThat().body(prefix(path), matcher);
-    }
-
-    public void clear() {
-        previousResponse = Optional.empty();
+    private void assertResponse(String path, Matcher<?> matcher) {
+        response.assertThat().body(prefix(path), matcher);
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
         return items -> {
-            if (response.then().extract().path(prefix(dataPath)) instanceof List) {
+            if (response.extract().path(prefix(dataPath)) instanceof List) {
                 assertResponse(dataPath, Matchers.hasItems(items));
             } else {
                 assertResponse(dataPath, Matchers.containsString((String) items[0]));
@@ -287,7 +127,7 @@ public class Connector {
 
     public Consumer<Object[]> thenIs(String dataPath) {
         return items -> {
-            if (response.then().extract().path(prefix(dataPath)) instanceof List) {
+            if (response.extract().path(prefix(dataPath)) instanceof List) {
                 assertResponse(dataPath, containsInAnyOrder(items));
             } else {
                 assertResponse(dataPath, is(items[0]));
@@ -296,21 +136,32 @@ public class Connector {
     }
 
     public void verifyRequestInLessThan(long timeout) {
-        response.then().time(Matchers.lessThanOrEqualTo(timeout));
+        response.time(Matchers.lessThanOrEqualTo(timeout));
     }
 
+    /**
+     * Extracts the value of the of the given <code>variable</code> from the latest response, where the given
+     * <code>attributeValue</code> is matching.
+     * <p>
+     * Like <code>extract 'id' from 'customer' where 'email=john.doe@gmail.com'</code>
+     *
+     * @param variable
+     * @param parent
+     * @param attributeValue
+     */
     public void extract(String variable, String parent, String attributeValue) {
         List<String> keyValueList = splitIntoKeyValueList(attributeValue);
-        Object path = response.then().extract().path(parent);
-        if (path instanceof List) {
-            List<Map<Object, Object>> theList = (List<Map<Object, Object>>) path;
+        Optional<Object> optionalParent = fromLatestResponse(parent);
+
+        optionalParent.filter(List.class::isInstance).ifPresent(enclosing -> {
+            List<Map<Object, Object>> theList = (List<Map<Object, Object>>) enclosing;
             Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
             first.ifPresent(f -> variableStorage.put(variable, f.get(variable)));
-        }
+        });
     }
 
     private List<String> splitIntoKeyValueList(String s) {
-        return Arrays.stream(s.split(COMMA_SEPARATED))
+        return Arrays.stream(s.split("\\s*,\\s*"))
                 .flatMap(s1 -> Arrays.stream(s1.split("=")))
                 .collect(Collectors.toList());
     }
@@ -319,15 +170,49 @@ public class Connector {
         Iterator<String> iterator = keyValues.iterator();
         while (iterator.hasNext()) {
             String key = iterator.next();
-            String value = iterator.next();
-            if (!target.get(key).equals(replaceVariables(value, this))) {
+            String query = replaceVariables(iterator.next());
+            if (!query.equals(target.get(key))) {
                 return false;
             }
         }
         return true;
     }
 
-    public Object getFromVariableStorage(String toLookFor) {
+
+    /**
+     * Replaces all variables from the given string by
+     *
+     * <ol>
+     *     <li>Checking the value from {@link com.github.ajoecker.gauge.random.data.VariableStorage}</li>
+     *     <li>Checking the value from a previous response</li>
+     * </ol>
+     * <p>
+     * In case the replaced value contains <code>"</code>, these get masks <code>\"</code>
+     *
+     * @param v the string with variables
+     * @return a replaced string with no variables
+     */
+    protected String replaceVariables(String v) {
+        java.util.regex.Matcher matcher = compile.matcher(v);
+        String result = v;
+        while (matcher.find()) {
+            String variableValue = getVariableValue(matcher.group(1).replace(MASK, "").trim());
+            String substring = v.substring(matcher.start(1), matcher.end(1));
+            result = result.replace(substring, variableValue.replace("\"", "\\\""));
+        }
+        return result;
+    }
+
+    private String getVariableValue(String variable) {
+        return getFromVariableStorage(variable).map(Object::toString)
+                .orElseGet(() ->
+                        fromLatestResponse(variable)
+                                .map(Object::toString)
+                                .filter(s -> s.length() > 0)
+                                .orElse(variable));
+    }
+
+    public Optional<Object> getFromVariableStorage(String toLookFor) {
         return variableStorage.get(toLookFor);
     }
 }

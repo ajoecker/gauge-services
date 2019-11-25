@@ -1,7 +1,5 @@
 package com.github.ajoecker.gauge.services.login;
 
-import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.VariableAccessor;
 import io.restassured.specification.AuthenticationSpecification;
 import io.restassured.specification.PreemptiveAuthSpec;
 import io.restassured.specification.RequestSpecification;
@@ -10,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.mock;
 
 public class TokenBasedLoginTest {
     private RequestSpecification requestSpecification;
@@ -27,7 +24,7 @@ public class TokenBasedLoginTest {
 
     @Test
     public void tokenIsGivenNoQueryIsRequired() {
-        TokenBasedLogin tokenBasedLogin = new TokenBasedLogin();
+        TokenBasedAuthentication tokenBasedLogin = new TokenBasedAuthentication();
         tokenBasedLogin.loginWithToken("12345");
         tokenBasedLogin.setLogin(requestSpecification);
         verify(preemptiveAuthSpec).oauth2("12345");

@@ -2,16 +2,18 @@ package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.VariableAccessor;
+import com.github.ajoecker.gauge.services.common.Sender;
 import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
 
 /**
- * {@link LoginHandler} that works on basic authentication.
+ * {@link AuthenticationHandler} that works on basic authentication.
  * <p>
  * It retrieves user and password information from the environment variables
  * <code>gauge.service.user</code> and <code>gauge.service.password</code>.
  */
-public class BasicAuthentication extends AbstractLoginHandler {
+public class BasicAuthentication implements AuthenticationHandler {
+    private String token;
     private String user;
     private String password;
 
@@ -32,7 +34,12 @@ public class BasicAuthentication extends AbstractLoginHandler {
     }
 
     @Override
-    public void loginWithSystemCredentials(Connector connector) {
+    public void loginWithToken(String token) {
+        this.token = token;
+    }
+
+    @Override
+    public void loginWithSystemCredentials(Sender connector) {
         VariableAccessor variableAccessor = connector.getVariableAccessor();
         this.user = variableAccessor.user();
         this.password = variableAccessor.password();

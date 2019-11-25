@@ -1,7 +1,7 @@
 package com.github.ajoecker.gauge.services;
 
-import com.github.ajoecker.gauge.services.login.LoginHandler;
-import com.github.ajoecker.gauge.services.login.TokenBasedLogin;
+import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
+import com.github.ajoecker.gauge.services.login.TokenBasedAuthentication;
 import com.github.ajoecker.gauge.services.login.BasicAuthentication;
 
 import java.util.Optional;
@@ -11,7 +11,7 @@ public final class Registry {
         TOKEN, BASIC
     }
 
-    private static LoginHandler loginHandler;
+    private static AuthenticationHandler authenticationHandler;
     private static Connector connector;
 
     private Registry() {
@@ -23,26 +23,26 @@ public final class Registry {
         init(connector, getLoginHandler(type));
     }
 
-    public static void init(Connector connector, LoginHandler loginHandler) {
+    public static void init(Connector connector, AuthenticationHandler authenticationHandler) {
         Registry.connector = connector;
-        Registry.loginHandler = loginHandler;
+        Registry.authenticationHandler = authenticationHandler;
     }
 
     public static Connector getConnector() {
         return connector;
     }
 
-    public static LoginHandler getLoginHandler() {
-        return loginHandler;
+    public static AuthenticationHandler getAuthenticationHandler() {
+        return authenticationHandler;
     }
 
-    private static LoginHandler getLoginHandler(String type) {
+    private static AuthenticationHandler getLoginHandler(String type) {
         switch (LoginType.valueOf(type.toUpperCase())) {
             case BASIC:
                 return new BasicAuthentication();
 
             case TOKEN:
-                return new TokenBasedLogin();
+                return new TokenBasedAuthentication();
 
             default:
                 throw new IllegalArgumentException("unknown type for login: " + type);
