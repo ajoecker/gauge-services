@@ -34,11 +34,11 @@ public class Connector {
         this.theSender = sender;
     }
 
-    public Sender requestSender() {
+    public final Sender requestSender() {
         return theSender;
     }
 
-    public void setResponse(Response response) {
+    public final void setResponse(Response response) {
         this.response = response.then();
     }
 
@@ -47,19 +47,26 @@ public class Connector {
      *
      * @param query the query
      */
-    public void post(String query) {
+    public final void post(String query) {
         post(query, "", null);
     }
 
     /**
      * Returns the prefix for the given data path, as some services will require a certain structure in the response,
-     * like graphql's <code>data</code>
+     * like graphql <code>data</code>
      *
-     * @param dataPath the path in the response
-     * @return the prefixed path. The default implementation returns simply the given path.
+     * @return the prefix to be added in front of any path. Default implementation returns an empty string
      */
-    protected String prefix(String dataPath) {
-        return dataPath;
+    protected String prefix() {
+        return "";
+    }
+
+    private String prefixfy(String path) {
+        String prefixer = prefix();
+        if (!"".equals(prefixer) && !path.startsWith(prefixer)) {
+            return prefixer + path;
+        }
+        return path;
     }
 
     /**
@@ -67,8 +74,8 @@ public class Connector {
      *
      * @param dataPath the path to check
      */
-    public void isEmpty(String dataPath) {
-        assertResponse(prefix(dataPath), empty());
+    public final void isEmpty(String dataPath) {
+        assertResponse(dataPath, empty());
     }
 
     /**
@@ -78,11 +85,11 @@ public class Connector {
      * @param path                  the resource the post is send to
      * @param authenticationHandler the {@link AuthenticationHandler} to ensure authentication
      */
-    public void post(String query, String path, AuthenticationHandler authenticationHandler) {
+    public final void post(String query, String path, AuthenticationHandler authenticationHandler) {
         String postEndpoint = theSender.getCompleteEndpoint(replaceVariables(path));
         Object object = bodyFor(replaceVariables(query));
-        Response response = theSender.sendPost(authenticationHandler, postEndpoint, object);
-        setResponse(response);
+        Response theResponse = theSender.sendPost(authenticationHandler, postEndpoint, object);
+        setResponse(theResponse);
     }
 
     /**
@@ -108,16 +115,16 @@ public class Connector {
      * @return the found value
      */
     public Optional<Object> fromLatestResponse(String variablePath) {
-        return Optional.ofNullable(response.extract().path(prefix(variablePath)));
+        return Optional.ofNullable(response.extract().path(prefixfy(variablePath)));
     }
 
     private void assertResponse(String path, Matcher<?> matcher) {
-        response.assertThat().body(prefix(path), matcher);
+        response.assertThat().body(prefixfy(path), matcher);
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
         return items -> {
-            if (response.extract().path(prefix(dataPath)) instanceof List) {
+            if (response.extract().path(prefixfy(dataPath)) instanceof List) {
                 assertResponse(dataPath, Matchers.hasItems(items));
             } else {
                 assertResponse(dataPath, Matchers.containsString((String) items[0]));
@@ -127,7 +134,7 @@ public class Connector {
 
     public Consumer<Object[]> thenIs(String dataPath) {
         return items -> {
-            if (response.extract().path(prefix(dataPath)) instanceof List) {
+            if (response.extract().path(prefixfy(dataPath)) instanceof List) {
                 assertResponse(dataPath, containsInAnyOrder(items));
             } else {
                 assertResponse(dataPath, is(items[0]));
@@ -135,7 +142,7 @@ public class Connector {
         };
     }
 
-    public void verifyRequestInLessThan(long timeout) {
+    public final void verifyRequestInLessThan(long timeout) {
         response.time(Matchers.lessThanOrEqualTo(timeout));
     }
 
@@ -149,7 +156,7 @@ public class Connector {
      * @param parent
      * @param attributeValue
      */
-    public void extract(String variable, String parent, String attributeValue) {
+    public final void extract(String variable, String parent, String attributeValue) {
         List<String> keyValueList = splitIntoKeyValueList(attributeValue);
         Optional<Object> optionalParent = fromLatestResponse(parent);
 
@@ -192,7 +199,7 @@ public class Connector {
      * @param v the string with variables
      * @return a replaced string with no variables
      */
-    protected String replaceVariables(String v) {
+    protected final String replaceVariables(String v) {
         java.util.regex.Matcher matcher = compile.matcher(v);
         String result = v;
         while (matcher.find()) {
@@ -212,7 +219,7 @@ public class Connector {
                                 .orElse(variable));
     }
 
-    public Optional<Object> getFromVariableStorage(String toLookFor) {
+    public final Optional<Object> getFromVariableStorage(String toLookFor) {
         return variableStorage.get(toLookFor);
     }
 }

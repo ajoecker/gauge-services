@@ -12,7 +12,7 @@ import io.restassured.specification.RequestSpecification;
  * It retrieves user and password information from the environment variables
  * <code>gauge.service.user</code> and <code>gauge.service.password</code>.
  */
-public class BasicAuthentication implements AuthenticationHandler {
+public final class BasicAuthentication implements AuthenticationHandler {
     private String token;
     private String user;
     private String password;

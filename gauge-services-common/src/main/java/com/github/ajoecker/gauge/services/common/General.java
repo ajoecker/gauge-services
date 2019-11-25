@@ -7,7 +7,7 @@ import com.thoughtworks.gauge.Step;
  * The class {@link General} contains common step implementations for all different kinds, like checking the status code,
  * the response time etc.
  */
-public class General extends Service<Connector> {
+public final class General extends Service<Connector> {
     @Step({"Then the request finished in less than <timeout> ms", "And the request finished in less than <timeout> ms",
             "Then the request finished in less than <timeout>ms", "And the request finished in less than <timeout>ms"})
     public void requestInLessThanMs(long timeout) {

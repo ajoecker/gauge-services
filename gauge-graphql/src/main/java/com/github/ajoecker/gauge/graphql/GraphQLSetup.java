@@ -17,8 +17,8 @@ public class GraphQLSetup {
             }
 
             @Override
-            public String prefix(String dataPath) {
-                return super.prefix("data." + dataPath);
+            public String prefix() {
+                return "data.";
             }
         });
     }

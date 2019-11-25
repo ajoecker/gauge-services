@@ -28,6 +28,7 @@ public class PostTest {
         };
         Connector connector = new Connector(new TestVariableStorage(), sender);
         Registry.init(connector);
+        new General().useEndpoint("http://endpoint");
         new POST().posting(theQuery);
     }
 
@@ -45,6 +46,7 @@ public class PostTest {
         };
         Connector connector = new Connector(testVariableStorage, sender);
         Registry.init(connector);
+        new General().useEndpoint("http://endpoint");
         new POST().posting(theQuery);
     }
 
@@ -66,6 +68,7 @@ public class PostTest {
             }
         };
         Registry.init(connector);
+        new General().useEndpoint("http://endpoint");
         new POST().posting(theQuery);
     }
 }

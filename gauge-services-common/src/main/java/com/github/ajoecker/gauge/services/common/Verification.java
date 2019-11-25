@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class Verification extends Service<Connector> {
+public final class Verification extends Service<Connector> {
     private static final String COMMA_SEPARATED = "\\s*,\\s*";
 
     @Step({"Then <path> contains <value>", "And <path> contains <value>"})

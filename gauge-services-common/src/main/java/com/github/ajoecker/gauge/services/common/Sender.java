@@ -2,11 +2,12 @@ package com.github.ajoecker.gauge.services.common;
 
 import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+
+import java.util.function.Function;
 
 import static io.restassured.RestAssured.given;
 
@@ -75,6 +76,9 @@ public class Sender {
     }
 
     public String getCompleteEndpoint(String path) {
+        if (Strings.isNullOrEmpty(endpoint)) {
+            throw new IllegalStateException("no endpoint is given");
+        }
         return checkTrailingSlash(endpoint, path);
     }
 
