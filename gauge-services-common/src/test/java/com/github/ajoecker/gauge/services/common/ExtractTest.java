@@ -29,29 +29,17 @@ public class ExtractTest {
     }
 
     @Test
-    public void foo() {
+    public void extract() {
         initConnector(new Connector(testVariableStorage, sender), "");
         new Extract().extractPath("token", "id=5");
         assertExtractToken("foo");
     }
 
     @Test
-    public void bar() {
+    public void extractWithQueryReplacement() {
         testVariableStorage.put("id", "2");
         initConnector(new Connector(testVariableStorage, sender), "");
         new Extract().extractPath("token", "id=%id%");
-        assertExtractToken("bar");
-    }
-
-    @Test
-    public void foobar() {
-        initConnector(new Connector(testVariableStorage, sender) {
-            @Override
-            public Optional<Object> fromLatestResponse(String variablePath) {
-                return Optional.of("2");
-            }
-        }, "parent");
-        new Extract().extractPathWithParent("token", "parent", "id=%id%");
         assertExtractToken("bar");
     }
 

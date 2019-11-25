@@ -20,7 +20,7 @@ public class DeleteTest {
     };
 
     @Test
-    public void foo() {
+    public void delete() {
         Sender sender = new Sender(variableAccessor) {
             @Override
             public Response sendDelete(AuthenticationHandler loginHandler, String deletePath) {
@@ -35,7 +35,7 @@ public class DeleteTest {
     }
 
     @Test
-    public void bar() {
+    public void deleteWithQueryReplacement() {
         Sender sender = new Sender(variableAccessor) {
             @Override
             public Response sendDelete(AuthenticationHandler loginHandler, String deletePath) {
@@ -52,7 +52,7 @@ public class DeleteTest {
     }
 
     @Test
-    public void blub() {
+    public void deleteWithQueryReplacementFromLatestResponse() {
         Sender sender = new Sender(variableAccessor) {
             @Override
             public Response sendDelete(AuthenticationHandler loginHandler, String deletePath) {

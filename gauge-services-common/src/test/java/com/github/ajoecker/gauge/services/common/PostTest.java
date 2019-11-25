@@ -32,7 +32,7 @@ public class PostTest {
     }
 
     @Test
-    public void foo() {
+    public void postWithQueryReplacement() {
         final String theQuery = "this is %foo%";
         TestVariableStorage testVariableStorage = new TestVariableStorage();
         testVariableStorage.put("foo", "1");
@@ -49,7 +49,7 @@ public class PostTest {
     }
 
     @Test
-    public void blu() {
+    public void postWithQueryReplacementFromLatesResponse() {
         final String theQuery = "this is %foo%";
         TestVariableStorage testVariableStorage = new TestVariableStorage();
         Sender sender = new Sender(new VariableAccessor()) {
