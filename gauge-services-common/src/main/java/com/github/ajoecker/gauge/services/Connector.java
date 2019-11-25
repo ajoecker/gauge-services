@@ -70,15 +70,6 @@ public class Connector {
     }
 
     /**
-     * Asserts that the given path is empty
-     *
-     * @param dataPath the path to check
-     */
-    public final void isEmpty(String dataPath) {
-        assertResponse(dataPath, empty());
-    }
-
-    /**
      * Sends a post with the given query and ensures that one is logged in, if required.
      *
      * @param query                 the query
@@ -118,7 +109,7 @@ public class Connector {
         return Optional.ofNullable(response.extract().path(prefixfy(variablePath)));
     }
 
-    private void assertResponse(String path, Matcher<?> matcher) {
+    public void assertResponse(String path, Matcher<?> matcher) {
         response.assertThat().body(prefixfy(path), matcher);
     }
 

@@ -5,6 +5,7 @@ import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
 import com.thoughtworks.gauge.TableRow;
+import org.hamcrest.Matchers;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.*;
 
 public final class Verification extends Service<Connector> {
     private static final String COMMA_SEPARATED = "\\s*,\\s*";
@@ -33,7 +35,22 @@ public final class Verification extends Service<Connector> {
 
     @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})
     public void thenEmpty(String dataPath) {
-        connector.isEmpty(dataPath);
+        connector.assertResponse(dataPath, empty());
+    }
+
+    @Step({"Then <dataPath> is not empty", "And <dataPath> is not empty"})
+    public void thenNotEmpty(String dataPath) {
+        connector.assertResponse(dataPath, not(empty()));
+    }
+
+    @Step({"Then <dataPath> is true", "And <dataPath> is true"})
+    public void thenTrue(String dataPath) {
+        connector.assertResponse(dataPath, is(true));
+    }
+
+    @Step({"Then <dataPath> is false", "And <dataPath> is false"})
+    public void thenFalse(String dataPath) {
+        connector.assertResponse(dataPath, is(false));
     }
 
     private void compare(Object value, Consumer<Object[]> match) {
