@@ -48,6 +48,11 @@ public final class Verification extends Service<Connector> {
         connector.assertResponse(dataPath, is(true));
     }
 
+    @Step({"Then the response is equal to <content>", "And the response is equal to <content>"})
+    public void thenIsEqual(String content) {
+        connector.assertResponseAsJson(content);
+    }
+
     @Step({"Then <dataPath> is false", "And <dataPath> is false"})
     public void thenFalse(String dataPath) {
         connector.assertResponse(dataPath, is(false));

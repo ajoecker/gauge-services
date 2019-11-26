@@ -3,8 +3,12 @@ package com.github.ajoecker.gauge.services.common;
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.Registry;
 import com.thoughtworks.gauge.Table;
+import io.restassured.response.Response;
+import io.restassured.response.ResponseBody;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
@@ -106,5 +110,22 @@ public class VerificationTest {
         };
         Registry.init(connector);
         new Verification().thenContains("path", map);
+    }
+
+    @Test
+    public void verifiesJson() {
+        String s = "{" +
+                "   \"id\": 34," +
+                "   \"name\": \"foobar\"" +
+                "}";
+
+        Response response = Mockito.mock(Response.class);
+        ResponseBody responseBody = Mockito.mock(ResponseBody.class);
+        Mockito.when(response.body()).thenReturn(responseBody);
+        Mockito.when(responseBody.asString()).thenReturn(s);
+        Connector connector = new Connector();
+        connector.setResponse(response);
+        Registry.init(connector);
+        new Verification().thenIsEqual(s);
     }
 }

@@ -3,8 +3,10 @@ package com.github.ajoecker.gauge.services;
 import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.common.Sender;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.restassured.response.Response;
-import io.restassured.response.ValidatableResponse;
+import org.assertj.core.api.Assertions;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
@@ -13,6 +15,7 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 
 /**
@@ -23,7 +26,7 @@ public class Connector {
     private static final String MASK = "%";
     protected final Sender theSender;
     private final VariableStorage variableStorage;
-    private ValidatableResponse response;
+    private Response response;
 
     public Connector() {
         this(VariableStorage.create(), new Sender(new VariableAccessor()));
@@ -39,7 +42,7 @@ public class Connector {
     }
 
     public final void setResponse(Response response) {
-        this.response = response.then();
+        this.response = response;
     }
 
     /**
@@ -96,7 +99,7 @@ public class Connector {
     }
 
     public void verifyStatusCode(int expected) {
-        response.statusCode(is(expected));
+        response.then().statusCode(is(expected));
     }
 
     /**
@@ -106,16 +109,16 @@ public class Connector {
      * @return the found value
      */
     public Optional<Object> fromLatestResponse(String variablePath) {
-        return Optional.ofNullable(response.extract().path(prefixfy(variablePath)));
+        return Optional.ofNullable(response.then().extract().path(prefixfy(variablePath)));
     }
 
     public void assertResponse(String path, Matcher<?> matcher) {
-        response.assertThat().body(prefixfy(path), matcher);
+        response.then().assertThat().body(prefixfy(path), matcher);
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
         return items -> {
-            if (response.extract().path(prefixfy(dataPath)) instanceof List) {
+            if (response.then().extract().path(prefixfy(dataPath)) instanceof List) {
                 assertResponse(dataPath, Matchers.hasItems(items));
             } else {
                 assertResponse(dataPath, Matchers.containsString((String) items[0]));
@@ -125,7 +128,7 @@ public class Connector {
 
     public Consumer<Object[]> thenIs(String dataPath) {
         return items -> {
-            if (response.extract().path(prefixfy(dataPath)) instanceof List) {
+            if (response.then().extract().path(prefixfy(dataPath)) instanceof List) {
                 assertResponse(dataPath, containsInAnyOrder(items));
             } else {
                 assertResponse(dataPath, is(items[0]));
@@ -134,7 +137,7 @@ public class Connector {
     }
 
     public final void verifyRequestInLessThan(long timeout) {
-        response.time(Matchers.lessThanOrEqualTo(timeout));
+        response.then().time(Matchers.lessThanOrEqualTo(timeout));
     }
 
     /**
@@ -212,5 +215,12 @@ public class Connector {
 
     public final Optional<Object> getFromVariableStorage(String toLookFor) {
         return variableStorage.get(toLookFor);
+    }
+
+    public void assertResponseAsJson(String content) {
+        JsonParser jsonParser = new JsonParser();
+        JsonElement actualJson = jsonParser.parse(response.body().asString());
+        JsonElement expectedJson = jsonParser.parse(content);
+        assertThat(actualJson).isEqualTo(expectedJson);
     }
 }
