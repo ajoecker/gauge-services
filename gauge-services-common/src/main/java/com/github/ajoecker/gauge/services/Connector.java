@@ -6,7 +6,6 @@ import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.restassured.response.Response;
-import org.assertj.core.api.Assertions;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
@@ -16,7 +15,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Abstraction of a connection to a service. This is the glue to connect and send to a service, e.g. GraphQL or REST
@@ -112,6 +112,12 @@ public class Connector {
         return Optional.ofNullable(response.then().extract().path(prefixfy(variablePath)));
     }
 
+    /**
+     * Asserts the given path in the response with the given {@link Matcher}
+     *
+     * @param path    the path to the wanted value
+     * @param matcher the matcher to verify the path
+     */
     public void assertResponse(String path, Matcher<?> matcher) {
         response.then().assertThat().body(prefixfy(path), matcher);
     }
@@ -146,9 +152,9 @@ public class Connector {
      * <p>
      * Like <code>extract 'id' from 'customer' where 'email=john.doe@gmail.com'</code>
      *
-     * @param variable
-     * @param parent
-     * @param attributeValue
+     * @param variable the variable to extract
+     * @param parent the parent from where to find the variable or empty string for root
+     * @param attributeValue the list of key=values that must match the entry in which the variable can be found
      */
     public final void extract(String variable, String parent, String attributeValue) {
         List<String> keyValueList = splitIntoKeyValueList(attributeValue);
