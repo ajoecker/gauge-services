@@ -2,7 +2,7 @@ package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.VariableAccessor;
-import com.github.ajoecker.gauge.services.common.Sender;
+import com.github.ajoecker.gauge.services.Sender;
 import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
 import org.tinylog.Logger;
@@ -42,8 +42,8 @@ public final class BasicAuthentication implements AuthenticationHandler {
     }
 
     @Override
-    public void loginWithSystemCredentials(Sender connector) {
-        VariableAccessor variableAccessor = connector.getVariableAccessor();
+    public void loginWithSystemCredentials(Sender sender) {
+        VariableAccessor variableAccessor = sender.getVariableAccessor();
         this.user = variableAccessor.user();
         this.password = variableAccessor.password();
         this.token = variableAccessor.token();

@@ -2,6 +2,8 @@ package com.github.ajoecker.gauge.services.common;
 
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.Registry;
+import com.github.ajoecker.gauge.services.Sender;
+import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.thoughtworks.gauge.Table;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBody;
@@ -18,16 +20,17 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class VerificationTest {
+    private Sender sender = new Sender(new VariableAccessor());
     @Test
     public void isWithString() {
         Consumer<Object[]> consumer = objects -> Assertions.assertArrayEquals(new String[]{"Pablo Picasso", "Banksy"}, objects);
-        Connector connector = new Connector() {
+        Connector connector = new Connector(sender) {
             @Override
             public Consumer<Object[]> thenIs(String dataPath) {
                 return consumer;
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender1 -> connector);
         Verification verification = new Verification();
         verification.thenIs("foo", "Pablo Picasso, Banksy");
     }
@@ -36,13 +39,13 @@ public class VerificationTest {
     public void isWithTable() {
         Map<String, String> m = Map.of("name", "foo", "value", "fooValue");
         Consumer<Object[]> consumer = objects -> Assertions.assertArrayEquals(new Map[]{m}, objects);
-        Connector connector = new Connector() {
+        Connector connector = new Connector(sender) {
             @Override
             public Consumer<Object[]> thenIs(String dataPath) {
                 return consumer;
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender1 -> connector);
         Verification verification = new Verification();
         Table table = new Table(List.of("name", "value"));
         table.addRow(List.of("foo", "fooValue"));
@@ -59,13 +62,13 @@ public class VerificationTest {
                     () -> assertEquals("Alicia", objects[1])
             );
         };
-        Connector connector = new Connector() {
+        Connector connector = new Connector(sender) {
             @Override
             public Consumer<Object[]> thenContains(String dataPath) {
                 return consumer;
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender1 -> connector);
         new Verification().thenContains("path", string);
     }
 
@@ -82,13 +85,13 @@ public class VerificationTest {
                     () -> assertEquals(objects[1], Map.of("nationality", "Spain", "name", "Alicia"))
             );
         };
-        Connector connector = new Connector() {
+        Connector connector = new Connector(sender) {
             @Override
             public Consumer<Object[]> thenContains(String dataPath) {
                 return consumer;
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender1 -> connector);
         new Verification().thenContains("path", table);
     }
 
@@ -102,13 +105,13 @@ public class VerificationTest {
                     () -> assertEquals(objects[1], Map.of("nationality", "Spain", "name", "Alicia"))
             );
         };
-        Connector connector = new Connector() {
+        Connector connector = new Connector(sender) {
             @Override
             public Consumer<Object[]> thenContains(String dataPath) {
                 return consumer;
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender1 -> connector);
         new Verification().thenContains("path", map);
     }
 
@@ -123,9 +126,9 @@ public class VerificationTest {
         ResponseBody responseBody = Mockito.mock(ResponseBody.class);
         Mockito.when(response.body()).thenReturn(responseBody);
         Mockito.when(responseBody.asString()).thenReturn(s);
-        Connector connector = new Connector();
-        connector.setResponse(response);
-        Registry.init(connector);
+        Connector connector = new Connector(sender);
+        sender.setResponse(response);
+        Registry.get().init("foo", sender1 -> connector);
         new Verification().thenIsEqual(s);
     }
 }

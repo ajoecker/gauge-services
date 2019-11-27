@@ -1,7 +1,7 @@
 package com.github.ajoecker.gauge.services.login;
 
 import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.common.Sender;
+import com.github.ajoecker.gauge.services.Sender;
 import io.restassured.specification.RequestSpecification;
 
 /**

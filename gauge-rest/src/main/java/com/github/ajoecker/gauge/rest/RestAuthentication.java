@@ -3,10 +3,10 @@ package com.github.ajoecker.gauge.rest;
 import com.github.ajoecker.gauge.services.common.Service;
 import com.thoughtworks.gauge.Step;
 
-public class RestAuthentication extends Service<RestConnector> {
+public final class RestAuthentication extends Service<RestConnector> {
     @Step({"When logging in", "And logging in"})
     public void loginWIthNoCredentials() {
-        authenticationHandler.loginWithSystemCredentials(connector.requestSender());
+        authenticationHandler.loginWithSystemCredentials(sender);
     }
 
     @Step({"When logging in with <user> and <password>", "And logging in with <user> and <password>"})

@@ -6,7 +6,7 @@ import com.thoughtworks.gauge.Step;
 /**
  * The class {@link Delete} contains all step implementations for deleting a resource
  */
-public class Delete extends Service<RestConnector> {
+public final class Delete extends Service<RestConnector> {
     @Step({"When deleting <query>", "And deleting <query>"})
     public void delete(String query) {
         connector.deleteWithLogin(query, "", authenticationHandler);

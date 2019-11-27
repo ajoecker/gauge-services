@@ -6,7 +6,7 @@ import com.thoughtworks.gauge.Step;
 /**
  * The class {@link PUT} contains all steps for a POST request
  */
-public class PUT extends Service<RestConnector> {
+public final class PUT extends Service<RestConnector> {
     @Step({"When putting <query>", "And putting <query>"})
     public void putting(String query) {
         connector.put(query, "", authenticationHandler);

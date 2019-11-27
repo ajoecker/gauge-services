@@ -11,7 +11,7 @@ public final class General extends Service<Connector> {
     @Step({"Then the request finished in less than <timeout> ms", "And the request finished in less than <timeout> ms",
             "Then the request finished in less than <timeout>ms", "And the request finished in less than <timeout>ms"})
     public void requestInLessThanMs(long timeout) {
-        connector.verifyRequestInLessThan(timeout);
+        sender.verifyRequestInLessThan(timeout);
     }
 
     @Step({"Then the request finished in less than <timeout> s", "And the request finished in less than <timeout> s",
@@ -22,7 +22,7 @@ public final class General extends Service<Connector> {
 
     @Step({"Then status code is <code>", "And status code is <code>"})
     public void verifyStatusCode(int expected) {
-        connector.verifyStatusCode(expected);
+        sender.verifyStatusCode(expected);
     }
 
     @Step({"When waiting for <seconds> s", "And waiting for <seconds> s"})
@@ -37,6 +37,6 @@ public final class General extends Service<Connector> {
 
     @Step("Given the endpoint <endpoint>")
     public void useEndpoint(String endpoint) {
-        connector.requestSender().setEndpoint(endpoint);
+        sender.setEndpoint(endpoint);
     }
 }

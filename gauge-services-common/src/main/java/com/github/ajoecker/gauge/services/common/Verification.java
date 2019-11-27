@@ -5,7 +5,6 @@ import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
 import com.thoughtworks.gauge.TableRow;
-import org.hamcrest.Matchers;
 
 import java.util.Arrays;
 import java.util.List;

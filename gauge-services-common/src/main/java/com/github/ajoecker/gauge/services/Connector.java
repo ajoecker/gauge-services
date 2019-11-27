@@ -1,11 +1,9 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.random.data.VariableStorage;
-import com.github.ajoecker.gauge.services.common.Sender;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import io.restassured.response.Response;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.tinylog.Logger;
@@ -25,35 +23,26 @@ import static org.hamcrest.Matchers.is;
 public class Connector {
     private static final Pattern compile = Pattern.compile("(%.+?%)");
     private static final String MASK = "%";
-    protected final Sender theSender;
+    protected final Sender sender;
     private final VariableStorage variableStorage;
-    private Response response;
-    private String prefix = "";
+    private final String prefix;
 
-    public Connector() {
-        this(VariableStorage.create(), new Sender(new VariableAccessor()), "");
+    public Connector(Sender sender) {
+        this(VariableStorage.create(), sender, "");
     }
 
     public Connector(VariableStorage variableStorage, Sender sender) {
         this(variableStorage, sender, "");
     }
 
-    public Connector(String prefix) {
-        this(VariableStorage.create(), new Sender(new VariableAccessor()), prefix);
+    public Connector(Sender sender, String prefix) {
+        this(VariableStorage.create(), sender, prefix);
     }
 
     public Connector(VariableStorage variableStorage, Sender sender, String prefix) {
         this.variableStorage = variableStorage;
-        this.theSender = sender;
+        this.sender = sender;
         this.prefix = prefix;
-    }
-
-    public final Sender requestSender() {
-        return theSender;
-    }
-
-    public final void setResponse(Response response) {
-        this.response = response;
     }
 
     /**
@@ -66,9 +55,8 @@ public class Connector {
     }
 
     private String prefixfy(String path) {
-        String prefixer = prefix;
-        if (!"".equals(prefixer) && !path.startsWith(prefixer)) {
-            return prefixer + path;
+        if (!"".equals(prefix) && !path.startsWith(prefix)) {
+            return prefix + path;
         }
         return path;
     }
@@ -81,10 +69,10 @@ public class Connector {
      * @param authenticationHandler the {@link AuthenticationHandler} to ensure authentication
      */
     public final void post(String query, String path, AuthenticationHandler authenticationHandler) {
-        String postEndpoint = theSender.getCompleteEndpoint(replaceVariables(path));
+        String postEndpoint = sender.getCompleteEndpoint(replaceVariables(path));
         Logger.info("posting to " + postEndpoint);
         Object object = bodyFor(replaceVariables(query));
-        setResponse(theSender.sendPost(authenticationHandler, postEndpoint, object));
+        sender.setResponse(sender.sendPost(authenticationHandler, postEndpoint, object));
         Logger.info("posting done");
     }
 
@@ -100,9 +88,9 @@ public class Connector {
         return query;
     }
 
-    public void verifyStatusCode(int expected) {
-        response.then().statusCode(is(expected));
-    }
+    // public void verifyStatusCode(int expected) {
+//        response.then().statusCode(is(expected));
+//    }
 
     /**
      * Returns the value of the given path from the latest response if existing.
@@ -112,7 +100,7 @@ public class Connector {
      */
     public Optional<Object> fromLatestResponse(String variablePath) {
         Logger.info("retrieving {} from latest response", variablePath);
-        return Optional.ofNullable(response.then().extract().path(prefixfy(variablePath)));
+        return Optional.ofNullable(sender.path(prefixfy(variablePath)));
     }
 
     /**
@@ -122,12 +110,13 @@ public class Connector {
      * @param matcher the matcher to verify the path
      */
     public void assertResponse(String path, Matcher<?> matcher) {
-        response.then().assertThat().body(prefixfy(path), matcher);
+        sender.assertResponse(prefixfy(path), matcher);
+
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
         return items -> {
-            if (response.then().extract().path(prefixfy(dataPath)) instanceof List) {
+            if (sender.path(prefixfy(dataPath)) instanceof List) {
                 assertResponse(dataPath, Matchers.hasItems(items));
             } else {
                 assertResponse(dataPath, Matchers.containsString((String) items[0]));
@@ -137,7 +126,7 @@ public class Connector {
 
     public Consumer<Object[]> thenIs(String dataPath) {
         return items -> {
-            if (response.then().extract().path(prefixfy(dataPath)) instanceof List) {
+            if (sender.path(prefixfy(dataPath)) instanceof List) {
                 assertResponse(dataPath, containsInAnyOrder(items));
             } else {
                 assertResponse(dataPath, is(items[0]));
@@ -145,9 +134,9 @@ public class Connector {
         };
     }
 
-    public final void verifyRequestInLessThan(long timeout) {
-        response.then().time(Matchers.lessThanOrEqualTo(timeout));
-    }
+//    public final void verifyRequestInLessThan(long timeout) {
+//        response.then().time(Matchers.lessThanOrEqualTo(timeout));
+//    }
 
     /**
      * Extracts the value of the of the given <code>variable</code> from the latest response, where the given
@@ -234,7 +223,7 @@ public class Connector {
 
     public void assertResponseAsJson(String content) {
         JsonParser jsonParser = new JsonParser();
-        JsonElement actualJson = jsonParser.parse(response.body().asString());
+        JsonElement actualJson = jsonParser.parse(sender.responseAsJson());
         JsonElement expectedJson = jsonParser.parse(content);
         assertThat(actualJson).isEqualTo(expectedJson);
     }

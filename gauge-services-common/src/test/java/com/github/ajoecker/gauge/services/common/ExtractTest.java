@@ -1,9 +1,6 @@
 package com.github.ajoecker.gauge.services.common;
 
-import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.Registry;
-import com.github.ajoecker.gauge.services.TestVariableStorage;
-import com.github.ajoecker.gauge.services.VariableAccessor;
+import com.github.ajoecker.gauge.services.*;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
@@ -12,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -47,8 +43,8 @@ public class ExtractTest {
         assertThat(testVariableStorage.get("token")).contains(expected);
     }
 
-    private static void initConnector(Connector connector, String path) {
-        Registry.init(connector);
+    private void initConnector(Connector connector, String path) {
+        Registry.get().init("foo", s -> connector);
         ExtractableResponse extractableResponse = mock(ExtractableResponse.class);
         ValidatableResponse validatableResponse = mock(ValidatableResponse.class);
         Response response = mock(Response.class);
@@ -60,6 +56,6 @@ public class ExtractTest {
                         Map.of("id", "2", "token", "bar")
                 )
         );
-        connector.setResponse(response);
+        sender.setResponse(response);
     }
 }

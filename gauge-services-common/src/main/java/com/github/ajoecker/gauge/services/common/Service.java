@@ -2,6 +2,7 @@ package com.github.ajoecker.gauge.services.common;
 
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.Registry;
+import com.github.ajoecker.gauge.services.Sender;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 
 /**
@@ -9,10 +10,13 @@ import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
  */
 public abstract class Service<T extends Connector> {
     protected final T connector;
+    protected final Sender sender;
     protected final AuthenticationHandler authenticationHandler;
 
     public Service() {
-        this.connector = (T) Registry.getConnector();
-        this.authenticationHandler = Registry.getAuthenticationHandler();
+        Registry registry = Registry.get();
+        this.connector = (T) registry.connector();
+        this.sender = registry.sender();
+        this.authenticationHandler = registry.getAuthenticationHandler();
     }
 }

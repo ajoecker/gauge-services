@@ -1,9 +1,6 @@
 package com.github.ajoecker.gauge.services.common;
 
-import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.Registry;
-import com.github.ajoecker.gauge.services.TestVariableStorage;
-import com.github.ajoecker.gauge.services.VariableAccessor;
+import com.github.ajoecker.gauge.services.*;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Assertions;
@@ -18,14 +15,11 @@ public class AuthenticationTest {
                 return "wrong-token";
             }
         };
-        Connector connector = new Connector(new TestVariableStorage(), new Sender(variableAccessor));
+        Sender sender = new Sender(variableAccessor);
+        Connector connector = new Connector(new TestVariableStorage(), sender);
         AuthenticationHandler authenticationHandler = new AuthenticationHandler() {
             @Override
             public void setLogin(RequestSpecification request) {
-            }
-
-            @Override
-            public void loginWithUserPassword(String user, String password, Connector connector) {
             }
 
             @Override
@@ -33,7 +27,7 @@ public class AuthenticationTest {
                 Assertions.assertEquals("funny-token", token);
             }
         };
-        Registry.init(connector, authenticationHandler);
+        Registry.get().init("foo", sender, connector, authenticationHandler);
         new Authentication().loginWithToken("funny-token");
     }
 }

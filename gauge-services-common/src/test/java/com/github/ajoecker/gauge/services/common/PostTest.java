@@ -1,9 +1,6 @@
 package com.github.ajoecker.gauge.services.common;
 
-import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.Registry;
-import com.github.ajoecker.gauge.services.TestVariableStorage;
-import com.github.ajoecker.gauge.services.VariableAccessor;
+import com.github.ajoecker.gauge.services.*;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
@@ -27,7 +24,7 @@ public class PostTest {
             }
         };
         Connector connector = new Connector(new TestVariableStorage(), sender);
-        Registry.init(connector);
+        Registry.get().init("foo", sender, connector, null);
         new General().useEndpoint("http://endpoint");
         new POST().posting(theQuery);
     }
@@ -45,7 +42,7 @@ public class PostTest {
             }
         };
         Connector connector = new Connector(testVariableStorage, sender);
-        Registry.init(connector);
+        Registry.get().init("foo", sender, connector, null);
         new General().useEndpoint("http://endpoint");
         new POST().posting(theQuery);
     }
@@ -67,7 +64,7 @@ public class PostTest {
                 return variablePath.equals("foo") ? Optional.of("1") : Optional.empty();
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender, connector, null);
         new General().useEndpoint("http://endpoint");
         new POST().posting(theQuery);
     }
