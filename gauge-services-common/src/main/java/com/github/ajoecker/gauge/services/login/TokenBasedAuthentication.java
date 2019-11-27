@@ -3,6 +3,7 @@ package com.github.ajoecker.gauge.services.login;
 import com.github.ajoecker.gauge.services.Connector;
 import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
+import org.tinylog.Logger;
 
 import java.util.Optional;
 
@@ -20,6 +21,7 @@ public final class TokenBasedAuthentication implements AuthenticationHandler {
     @Override
     public void setLogin(RequestSpecification request) {
         if (!Strings.isNullOrEmpty(loginToken)) {
+            Logger.info("set token for login: {}", loginToken);
             request.auth().preemptive().oauth2(loginToken);
         }
     }
@@ -33,5 +35,6 @@ public final class TokenBasedAuthentication implements AuthenticationHandler {
     public void loginWithQuery(String query, String tokenPath, Connector connector) {
         connector.post(query);
         loginToken = connector.fromLatestResponse(tokenPath).map(Object::toString).orElse("");
+        Logger.info("saved token for login: {}", loginToken);
     }
 }

@@ -5,6 +5,7 @@ import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.github.ajoecker.gauge.services.common.Sender;
 import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
+import org.tinylog.Logger;
 
 /**
  * {@link AuthenticationHandler} that works on basic authentication.
@@ -20,9 +21,11 @@ public final class BasicAuthentication implements AuthenticationHandler {
     @Override
     public void setLogin(RequestSpecification request) {
         if (!Strings.isNullOrEmpty(user) && !Strings.isNullOrEmpty(password)) {
+            Logger.info("logging in with {} and {}", user, password);
             request.auth().preemptive().basic(user, password);
         }
         else if (!Strings.isNullOrEmpty(token)) {
+            Logger.info("setting header 'Authorization' with 'Basic {}'", token);
             request.header("Authorization", "Basic " + token);
         }
     }

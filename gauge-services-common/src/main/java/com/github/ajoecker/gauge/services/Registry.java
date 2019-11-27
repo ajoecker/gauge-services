@@ -1,8 +1,9 @@
 package com.github.ajoecker.gauge.services;
 
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
-import com.github.ajoecker.gauge.services.login.TokenBasedAuthentication;
 import com.github.ajoecker.gauge.services.login.BasicAuthentication;
+import com.github.ajoecker.gauge.services.login.TokenBasedAuthentication;
+import org.tinylog.Logger;
 
 import java.util.Optional;
 
@@ -20,6 +21,7 @@ public final class Registry {
 
     public static void init(Connector connector) {
         String type = Optional.ofNullable(System.getenv("gauge.service.loginhandler")).orElse(LoginType.BASIC.toString());
+        Logger.info("loginhandler = " + type);
         init(connector, getLoginHandler(type));
     }
 

@@ -5,6 +5,7 @@ import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.common.Sender;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.common.base.Strings;
+import org.tinylog.Logger;
 
 public class RestConnector extends Connector {
     public RestConnector() {
@@ -27,6 +28,7 @@ public class RestConnector extends Connector {
         if (!Strings.isNullOrEmpty(parameter)) {
             queryPath = queryPath + "?" + parameter;
         }
+        Logger.info("get from {}", queryPath);
         setResponse(theSender.sendGet(authenticationHandler, queryPath));
     }
 
@@ -38,6 +40,7 @@ public class RestConnector extends Connector {
      */
     void put(String query, String path, AuthenticationHandler authenticationHandler) {
         String theEndpoint = theSender.getCompleteEndpoint(replaceVariables(path));
+        Logger.info("putting to {}", theEndpoint);
         Object object = bodyFor(replaceVariables(query));
         setResponse(theSender.sendPut(authenticationHandler, theEndpoint, object));
     }
@@ -45,6 +48,7 @@ public class RestConnector extends Connector {
     void deleteWithLogin(String query, String path, AuthenticationHandler authenticationHandler) {
         String base = theSender.getCompleteEndpoint(replaceVariables(path));
         String deletePath = theSender.checkTrailingSlash(base, replaceVariables(query));
+        Logger.info("deleting from {}", deletePath);
         setResponse(theSender.sendDelete(authenticationHandler, deletePath));
     }
 }

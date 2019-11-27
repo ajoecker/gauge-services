@@ -8,6 +8,7 @@ import com.google.gson.JsonParser;
 import io.restassured.response.Response;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
+import org.tinylog.Logger;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -27,14 +28,24 @@ public class Connector {
     protected final Sender theSender;
     private final VariableStorage variableStorage;
     private Response response;
+    private String prefix = "";
 
     public Connector() {
-        this(VariableStorage.create(), new Sender(new VariableAccessor()));
+        this(VariableStorage.create(), new Sender(new VariableAccessor()), "");
     }
 
     public Connector(VariableStorage variableStorage, Sender sender) {
+        this(variableStorage, sender, "");
+    }
+
+    public Connector(String prefix) {
+        this(VariableStorage.create(), new Sender(new VariableAccessor()), prefix);
+    }
+
+    public Connector(VariableStorage variableStorage, Sender sender, String prefix) {
         this.variableStorage = variableStorage;
         this.theSender = sender;
+        this.prefix = prefix;
     }
 
     public final Sender requestSender() {
@@ -54,18 +65,8 @@ public class Connector {
         post(query, "", null);
     }
 
-    /**
-     * Returns the prefix for the given data path, as some services will require a certain structure in the response,
-     * like graphql <code>data</code>
-     *
-     * @return the prefix to be added in front of any path. Default implementation returns an empty string
-     */
-    protected String prefix() {
-        return "";
-    }
-
     private String prefixfy(String path) {
-        String prefixer = prefix();
+        String prefixer = prefix;
         if (!"".equals(prefixer) && !path.startsWith(prefixer)) {
             return prefixer + path;
         }
@@ -81,9 +82,10 @@ public class Connector {
      */
     public final void post(String query, String path, AuthenticationHandler authenticationHandler) {
         String postEndpoint = theSender.getCompleteEndpoint(replaceVariables(path));
+        Logger.info("posting to " + postEndpoint);
         Object object = bodyFor(replaceVariables(query));
-        Response theResponse = theSender.sendPost(authenticationHandler, postEndpoint, object);
-        setResponse(theResponse);
+        setResponse(theSender.sendPost(authenticationHandler, postEndpoint, object));
+        Logger.info("posting done");
     }
 
     /**
@@ -109,6 +111,7 @@ public class Connector {
      * @return the found value
      */
     public Optional<Object> fromLatestResponse(String variablePath) {
+        Logger.info("retrieving {} from latest response", variablePath);
         return Optional.ofNullable(response.then().extract().path(prefixfy(variablePath)));
     }
 
@@ -152,18 +155,24 @@ public class Connector {
      * <p>
      * Like <code>extract 'id' from 'customer' where 'email=john.doe@gmail.com'</code>
      *
-     * @param variable the variable to extract
-     * @param parent the parent from where to find the variable or empty string for root
+     * @param variable       the variable to extract
+     * @param parent         the parent from where to find the variable or empty string for root
      * @param attributeValue the list of key=values that must match the entry in which the variable can be found
      */
     public final void extract(String variable, String parent, String attributeValue) {
+        Logger.info("extracting variable {} where {} is", variable, attributeValue);
         List<String> keyValueList = splitIntoKeyValueList(attributeValue);
         Optional<Object> optionalParent = fromLatestResponse(parent);
 
         optionalParent.filter(List.class::isInstance).ifPresent(enclosing -> {
+            Logger.info("extracting from found value {}", enclosing);
             List<Map<Object, Object>> theList = (List<Map<Object, Object>>) enclosing;
-            Optional<Map<Object, Object>> first = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
-            first.ifPresent(f -> variableStorage.put(variable, f.get(variable)));
+            Optional<Map<Object, Object>> match = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
+            match.ifPresent(keyValue -> {
+                Object value = keyValue.get(variable);
+                Logger.info("extraction succesful for {}", value);
+                variableStorage.put(variable, value);
+            });
         });
     }
 
