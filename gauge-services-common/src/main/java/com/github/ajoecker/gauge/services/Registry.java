@@ -1,12 +1,10 @@
 package com.github.ajoecker.gauge.services;
 
-import com.github.ajoecker.gauge.services.common.Service;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.github.ajoecker.gauge.services.login.BasicAuthentication;
 import com.github.ajoecker.gauge.services.login.TokenBasedAuthentication;
 import org.tinylog.Logger;
 
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

@@ -6,7 +6,22 @@ import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class AuthenticationTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class CommonTest {
+    @Test
+    public void statusCodeIsChecked() {
+        final int code = 200;
+        Sender sender = new Sender(new VariableAccessor()) {
+            public void verifyStatusCode(int expected) {
+                assertEquals(code, expected);
+            }
+        };
+        Connector connector = new Connector(sender);
+        Registry.get().init("foo", sender, connector, null);
+        new Common().verifyStatusCode(code);
+    }
+
     @Test
     public void onlyTokenGivenIsThenUsed() {
         VariableAccessor variableAccessor = new VariableAccessor() {
@@ -28,6 +43,6 @@ public class AuthenticationTest {
             }
         };
         Registry.get().init("foo", sender, connector, authenticationHandler);
-        new Authentication().loginWithToken("funny-token");
+        new Common().loginWithToken("funny-token");
     }
 }

@@ -5,8 +5,6 @@ import com.google.common.base.Strings;
 import io.restassured.specification.RequestSpecification;
 import org.tinylog.Logger;
 
-import java.util.Optional;
-
 /**
  * A {@link AuthenticationHandler} that works based on a token.
  * <p>

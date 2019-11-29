@@ -25,8 +25,8 @@ public class PostTest {
         };
         Connector connector = new Connector(new TestVariableStorage(), sender);
         Registry.get().init("foo", sender, connector, null);
-        new General().useEndpoint("http://endpoint");
-        new POST().posting(theQuery);
+        new Common().useEndpoint("http://endpoint");
+        new Common().posting(theQuery);
     }
 
     @Test
@@ -43,8 +43,8 @@ public class PostTest {
         };
         Connector connector = new Connector(testVariableStorage, sender);
         Registry.get().init("foo", sender, connector, null);
-        new General().useEndpoint("http://endpoint");
-        new POST().posting(theQuery);
+        new Common().useEndpoint("http://endpoint");
+        new Common().posting(theQuery);
     }
 
     @Test
@@ -65,7 +65,7 @@ public class PostTest {
             }
         };
         Registry.get().init("foo", sender, connector, null);
-        new General().useEndpoint("http://endpoint");
-        new POST().posting(theQuery);
+        new Common().useEndpoint("http://endpoint");
+        new Common().posting(theQuery);
     }
 }

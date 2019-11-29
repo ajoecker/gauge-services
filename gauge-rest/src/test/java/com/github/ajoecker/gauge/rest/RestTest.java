@@ -11,7 +11,7 @@ import org.mockito.Mockito;
 
 import java.util.Optional;
 
-public class DeleteTest {
+public class RestTest {
     VariableAccessor variableAccessor = new VariableAccessor() {
         @Override
         public String endpoint() {
@@ -29,7 +29,7 @@ public class DeleteTest {
             }
         };
         Registry.get().init("foo", sender1 -> new RestConnector(new TestVariableStorage(), sender));
-        Delete delete = new Delete();
+        Rest delete = new Rest();
         delete.delete("4", "de/customers");
     }
 
@@ -45,7 +45,7 @@ public class DeleteTest {
         TestVariableStorage variableStorage = new TestVariableStorage();
         variableStorage.put("foo", 4);
         Registry.get().init("bar", sender1 -> new RestConnector(variableStorage, sender));
-        Delete delete = new Delete();
+        Rest delete = new Rest();
         delete.delete("%foo%", "de/customers");
     }
 
@@ -65,7 +65,7 @@ public class DeleteTest {
                 return variablePath.equals("customers") ? Optional.of("cua") : Optional.empty();
             }
         });
-        Delete delete = new Delete();
+        Rest delete = new Rest();
         delete.delete("4", "de/%customers%");
     }
 }

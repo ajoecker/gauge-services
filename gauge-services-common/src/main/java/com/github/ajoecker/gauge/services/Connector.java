@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
@@ -88,10 +89,6 @@ public class Connector {
         return query;
     }
 
-    // public void verifyStatusCode(int expected) {
-//        response.then().statusCode(is(expected));
-//    }
-
     /**
      * Returns the value of the given path from the latest response if existing.
      *
@@ -133,10 +130,6 @@ public class Connector {
             }
         };
     }
-
-//    public final void verifyRequestInLessThan(long timeout) {
-//        response.then().time(Matchers.lessThanOrEqualTo(timeout));
-//    }
 
     /**
      * Extracts the value of the of the given <code>variable</code> from the latest response, where the given
@@ -226,5 +219,15 @@ public class Connector {
         JsonElement actualJson = jsonParser.parse(sender.responseAsJson());
         JsonElement expectedJson = jsonParser.parse(content);
         assertThat(actualJson).isEqualTo(expectedJson);
+    }
+
+    public void extractSum(String variable, String variablesToSum) {
+        double sum = stream(variablesToSum.split(","))
+                .map(String::trim)
+                .map(this::getVariableValue)
+                .mapToDouble(Double::parseDouble)
+                .sum();
+        Logger.info("saving {} as sum {}", variable, sum);
+        variableStorage.put(variable, sum);
     }
 }

@@ -27,7 +27,7 @@ public class ExtractTest {
     @Test
     public void extract() {
         initConnector(new Connector(testVariableStorage, sender), "");
-        new Extract().extractPath("token", "id=5");
+        new Common().extractPath("token", "id=5");
         assertExtractToken("foo");
     }
 
@@ -35,7 +35,7 @@ public class ExtractTest {
     public void extractWithQueryReplacement() {
         testVariableStorage.put("id", "2");
         initConnector(new Connector(testVariableStorage, sender), "");
-        new Extract().extractPath("token", "id=%id%");
+        new Common().extractPath("token", "id=%id%");
         assertExtractToken("bar");
     }
 

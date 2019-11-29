@@ -4,10 +4,10 @@ import com.github.ajoecker.gauge.services.Connector;
 import com.thoughtworks.gauge.Step;
 
 /**
- * The class {@link General} contains common step implementations for all different kinds, like checking the status code,
+ * The class {@link Common} contains common step implementations for all different kinds, like checking the status code,
  * the response time etc.
  */
-public final class General extends Service<Connector> {
+public final class Common extends Service<Connector> {
     @Step({"Then the request finished in less than <timeout> ms", "And the request finished in less than <timeout> ms",
             "Then the request finished in less than <timeout>ms", "And the request finished in less than <timeout>ms"})
     public void requestInLessThanMs(long timeout) {
@@ -38,5 +38,33 @@ public final class General extends Service<Connector> {
     @Step("Given the endpoint <endpoint>")
     public void useEndpoint(String endpoint) {
         sender.setEndpoint(endpoint);
+    }
+
+    @Step({"When logging in with token <token>", "And logging in with token <token>"})
+    public void loginWithToken(String token) {
+        authenticationHandler.loginWithToken(token);
+    }
+
+    @Step({"Then extracting <variable> from <parent> where <attribute>",
+            "And extracting <variable> from <parent> where <attribute>"})
+    public void extractPathWithParent(String variable, String parent, String attributeValue) {
+        connector.extract(variable, parent, attributeValue);
+    }
+
+    @Step({"Then extracting <variable> where <attribute>",
+            "And extracting <variable> where <attribute>"})
+    public void extractPath(String variable, String attributeValue) {
+        connector.extract(variable, "", attributeValue);
+    }
+
+    @Step({"Then extracting <variable> as sum of <sum>",
+            "And extracting <variable> as sum of <sum>"})
+    public void extractAsSum(String variable, String sum) {
+        connector.extractSum(variable, sum);
+    }
+
+    @Step({"When posting <query>", "And posting <query>"})
+    public void posting(String query) {
+        connector.post(query, "", authenticationHandler);
     }
 }

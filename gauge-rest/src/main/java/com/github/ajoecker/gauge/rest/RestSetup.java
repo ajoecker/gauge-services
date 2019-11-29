@@ -5,13 +5,13 @@ import com.thoughtworks.gauge.BeforeSuite;
 import com.thoughtworks.gauge.Step;
 import org.tinylog.Logger;
 
-public class GaugeRestSetup {
+public class RestSetup {
     static final String REST_TYPE = "rest";
 
     @BeforeSuite
     public void before() {
         Logger.info("setting up REST service");
-        Registry.get().init(REST_TYPE, sender -> new RestConnector(sender));
+        Registry.get().init(REST_TYPE, RestConnector::new);
     }
 
     @Step("Given the rest endpoint <endpoint>")

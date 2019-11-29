@@ -2,7 +2,6 @@ package com.github.ajoecker.gauge.rest;
 
 import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.Registry;
 import com.github.ajoecker.gauge.services.Sender;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.common.base.Strings;

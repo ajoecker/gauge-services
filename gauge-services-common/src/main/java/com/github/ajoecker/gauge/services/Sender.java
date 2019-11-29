@@ -1,6 +1,5 @@
 package com.github.ajoecker.gauge.services;
 
-import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
