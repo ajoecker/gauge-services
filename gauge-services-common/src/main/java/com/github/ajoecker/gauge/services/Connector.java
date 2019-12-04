@@ -4,6 +4,7 @@ import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import io.restassured.path.json.JsonPath;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.tinylog.Logger;
@@ -96,8 +97,9 @@ public class Connector {
      * @return the found value
      */
     public Optional<Object> fromLatestResponse(String variablePath) {
-        Logger.info("retrieving {} from latest response", variablePath);
-        return Optional.ofNullable(sender.path(prefixfy(variablePath)));
+        Optional<Object> value = Optional.ofNullable(sender.path(prefixfy(variablePath)));
+        Logger.info("retrieving {} from latest response: {}", variablePath, value);
+        return value;
     }
 
     /**
@@ -108,7 +110,6 @@ public class Connector {
      */
     public void assertResponse(String path, Matcher<?> matcher) {
         sender.assertResponse(prefixfy(path), matcher);
-
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
@@ -139,27 +140,41 @@ public class Connector {
      *
      * @param variable       the variable to extract
      * @param parent         the parent from where to find the variable or empty string for root
-     * @param attributeValue the list of key=values that must match the entry in which the variable can be found
+     * @param attributeValue the list of key=values that must match the entry in which the variable can be found.
+     *                       This can be null, then the first (or if not a list, the only one) is taken.
      */
     public final void extract(String variable, String parent, String attributeValue) {
         Logger.info("extracting variable {} where {} is", variable, attributeValue);
         List<String> keyValueList = splitIntoKeyValueList(attributeValue);
         Optional<Object> optionalParent = fromLatestResponse(parent);
 
-        optionalParent.filter(List.class::isInstance).ifPresent(enclosing -> {
-            Logger.info("extracting from found value {}", enclosing);
-            List<Map<Object, Object>> theList = (List<Map<Object, Object>>) enclosing;
-            Optional<Map<Object, Object>> match = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
-            match.ifPresent(keyValue -> {
-                Object value = keyValue.get(variable);
-                Logger.info("extraction succesful for {}", value);
-                variableStorage.put(variable, value);
-            });
+        if (keyValueList.isEmpty()) {
+            optionalParent.ifPresent(o -> storeVariableFromMap(variable, (Map<Object, Object>) o));
+        } else {
+            optionalParent.filter(List.class::isInstance).ifPresent(enclosing -> storeMatchInMap(variable, keyValueList, enclosing));
+        }
+    }
+
+    private void storeMatchInMap(String variable, List<String> keyValueList, Object enclosing) {
+        Logger.info("extracting from found value {}", enclosing);
+        List<Map<Object, Object>> theList = (List<Map<Object, Object>>) enclosing;
+        Optional<Map<Object, Object>> match = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
+        match.ifPresent(keyValue -> {
+            Object value = keyValue.get(variable);
+            Logger.info("extraction successful for {}", value);
+            variableStorage.put(variable, value);
         });
     }
 
+    private void storeVariableFromMap(String variable, Map<Object, Object> o) {
+        Map<Object, Object> asMap = o;
+        Object value = asMap.get(variable);
+        Logger.info("extraction successful for {} from {}", value, variable);
+        variableStorage.put(variable, value);
+    }
+
     private List<String> splitIntoKeyValueList(String s) {
-        return Arrays.stream(s.split("\\s*,\\s*"))
+        return s.length() == 0 ? List.of() : Arrays.stream(s.split("\\s*,\\s*"))
                 .flatMap(s1 -> Arrays.stream(s1.split("=")))
                 .collect(Collectors.toList());
     }
@@ -229,5 +244,11 @@ public class Connector {
                 .sum();
         Logger.info("saving {} as sum {}", variable, sum);
         variableStorage.put(variable, sum);
+    }
+
+    public void extractFromJson(String pathInJson, String pathToJson, String variableToStore) {
+        Object value = JsonPath.from(sender.path(prefixfy(pathToJson)).toString()).get(pathInJson);
+        Logger.info("extracted {} from json {} in path {}", value, pathToJson, pathInJson);
+        variableStorage.put(variableToStore, value);
     }
 }

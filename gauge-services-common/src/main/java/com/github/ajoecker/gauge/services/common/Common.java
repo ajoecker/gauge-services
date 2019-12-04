@@ -45,6 +45,18 @@ public final class Common extends Service<Connector> {
         authenticationHandler.loginWithToken(token);
     }
 
+    @Step({"Then extracting <variable> from <parent>",
+            "And extracting <variable> from <parent>"})
+    public void extractPathWithParent(String variable, String parent) {
+        connector.extract(variable, parent, "");
+    }
+
+    @Step({"Then extracting <variable>",
+            "And extracting <variable>"})
+    public void extractPath(String variable) {
+        connector.extract(variable, "", "");
+    }
+
     @Step({"Then extracting <variable> from <parent> where <attribute>",
             "And extracting <variable> from <parent> where <attribute>"})
     public void extractPathWithParent(String variable, String parent, String attributeValue) {
@@ -61,6 +73,12 @@ public final class Common extends Service<Connector> {
             "And extracting <variable> as sum of <sum>"})
     public void extractAsSum(String variable, String sum) {
         connector.extractSum(variable, sum);
+    }
+
+    @Step({"Then extracting <pathInJson> as <variableToStore> from json <pathToJson>",
+            "And extracting <pathInJson> as <variableToStore> from json <pathToJson>"})
+    public void extractFromJson(String pathInJson, String variableToStore, String pathToJson) {
+        connector.extractFromJson(pathInJson, pathToJson, variableToStore);
     }
 
     @Step({"When posting <query>", "And posting <query>"})

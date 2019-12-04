@@ -6,6 +6,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matcher;
+import org.tinylog.Logger;
 
 import java.util.function.Function;
 
@@ -102,6 +103,7 @@ public class Sender {
 
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
+        Logger.info("endpoint set to {}", endpoint);
     }
 
     public Object path(String path) {

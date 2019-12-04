@@ -37,8 +37,7 @@ public final class Registry {
     public void init(String type, Function<Sender, Connector> function) {
         String loginHandler = Optional.ofNullable(System.getenv("gauge.service.loginhandler")).orElse(LoginType.BASIC.toString());
         Logger.info("loginhandler = " + loginHandler);
-        Sender theSender =new Sender(new VariableAccessor());
-        init(type, theSender, function.apply(theSender), getLoginHandler(loginHandler));
+        init(type, sender, function.apply(sender), getLoginHandler(loginHandler));
     }
 
     // test-friendly
