@@ -31,6 +31,13 @@ public final class Verification extends Service<Connector> {
                 ifPresentOrElse(v -> assertThat(v.toString()).isEqualTo(value), () -> compare(value, connector.thenIs(dataPath)));
     }
 
+    @Step({"Then <inJson> from json <toJson> is <value>",
+            "And <inJson> from json <toJson> is <value>"})
+    public void jsonExtractionEqual(String pathInJson, String pathtoJson, Object value) {
+        connector.extractFromJson(pathInJson, pathtoJson, pathInJson);
+        thenIs(pathInJson, value);
+    }
+
     @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})
     public void thenEmpty(String dataPath) {
         connector.assertResponse(dataPath, empty());
