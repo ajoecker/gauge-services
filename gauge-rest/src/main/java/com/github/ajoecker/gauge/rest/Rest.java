@@ -9,17 +9,17 @@ import java.util.stream.Collectors;
 public class Rest extends Service<RestConnector> {
     @Step({"When deleting <query>", "And deleting <query>"})
     public void delete(String query) {
-        connector.deleteWithLogin(query, "", authenticationHandler);
+        connector().deleteWithLogin(query, "", authenticationHandler);
     }
 
     @Step({"When deleting <query> from <path>", "And deleting <query> from <path>"})
     public void delete(String query, String path) {
-        connector.deleteWithLogin(query, path, authenticationHandler);
+        connector().deleteWithLogin(query, path, authenticationHandler);
     }
 
     @Step({"When getting <resource>", "And getting <resource>"})
     public void get(String resource) {
-        connector.get(resource, "", authenticationHandler);
+        connector().get(resource, "", authenticationHandler);
     }
 
     @Step({"When getting <query> with <parameters>", "And getting <query> with <parameters>"})
@@ -28,7 +28,7 @@ public class Rest extends Service<RestConnector> {
             getForGaugeTable(query, (Table) parameters);
         } else if (parameters instanceof String) {
             // the string is already in the format var1=val,var2=val2 - so only , must be replaced with &
-            connector.get(query, ((String) parameters).replaceAll("\\s+", "").replace(',', '&'), authenticationHandler);
+            connector().get(query, ((String) parameters).replaceAll("\\s+", "").replace(',', '&'), authenticationHandler);
         }
     }
 
@@ -37,17 +37,17 @@ public class Rest extends Service<RestConnector> {
         String getParameters = table.getTableRows().stream()
                 .map(tableRow -> tableRow.getCell("name") + "=" + tableRow.getCell("value"))
                 .collect(Collectors.joining("&"));
-        connector.get(query, getParameters, authenticationHandler);
+        connector().get(query, getParameters, authenticationHandler);
     }
 
     @Step({"When putting <query>", "And putting <query>"})
     public void putting(String query) {
-        connector.put(query, "", authenticationHandler);
+        connector().put(query, "", authenticationHandler);
     }
 
     @Step({"When putting <query> to <path>", "And putting <query> to <path>"})
     public void putting(String query, String path) {
-        connector.put(query, path, authenticationHandler);
+        connector().put(query, path, authenticationHandler);
     }
 
     @Step({"When logging in", "And logging in"})
@@ -57,11 +57,11 @@ public class Rest extends Service<RestConnector> {
 
     @Step({"When logging in with <user> and <password>", "And logging in with <user> and <password>"})
     public void loginUserWithPassword(String user, String password) {
-        authenticationHandler.loginWithUserPassword(user, password, connector);
+        authenticationHandler.loginWithUserPassword(user, password, connector());
     }
 
     @Step({"When posting <query> to <path>", "And posting <query> to <path>"})
     public void posting(String query, String path) {
-        connector.post(query, path, authenticationHandler);
+        connector().post(query, path, authenticationHandler);
     }
 }

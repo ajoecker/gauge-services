@@ -6,10 +6,9 @@ import com.thoughtworks.gauge.Table;
 import com.thoughtworks.gauge.TableCell;
 import com.thoughtworks.gauge.TableRow;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
@@ -21,46 +20,61 @@ public final class Verification extends Service<Connector> {
 
     @Step({"Then <path> contains <value>", "And <path> contains <value>"})
     public void thenContains(String dataPath, Object value) {
-        compare(value, connector.thenContains(dataPath));
+        compare(value, connector().thenContains(dataPath));
     }
 
     @Step({"Then <path> is <value>", "And <path> is <value>",
             "Then <path> are <value>", "And <path> are <value>"})
     public void thenIs(String dataPath, Object value) {
-        connector.getFromVariableStorage(dataPath).
-                ifPresentOrElse(v -> assertThat(v.toString()).isEqualTo(value), () -> compare(value, connector.thenIs(dataPath)));
+        connector().getFromVariableStorage(dataPath).
+                ifPresentOrElse(v -> assertThat(v.toString()).isEqualTo(value), () -> compare(value, connector().thenIs(dataPath)));
+    }
+
+    @Step({"Then <actual> is identical to <expected>", "And <actual> is identical to <expected>"})
+    public void compareVariables(String actual, String allExpected) {
+        Object actualValue = connector().getFromVariableStorage(actual).orElseThrow();
+        String[] expectedVariables = split(allExpected);
+        List<String> errorMessages = new ArrayList<>();
+
+        Arrays.stream(expectedVariables).forEach(each -> connector().getFromVariableStorage(each.trim()).ifPresentOrElse(s -> {
+            if (!s.equals(actualValue)) {
+                errorMessages.add(each + " (" + s + ") is not equal to " + actual + " (" + actualValue + ")");
+            }
+        }, () -> errorMessages.add(each + " is not known")));
+
+        assertThat(errorMessages).withFailMessage("\n" + errorMessages.stream().collect(Collectors.joining("\n"))).isEmpty();
     }
 
     @Step({"Then <inJson> from json <toJson> is <value>",
             "And <inJson> from json <toJson> is <value>"})
     public void jsonExtractionEqual(String pathInJson, String pathtoJson, Object value) {
-        connector.extractFromJson(pathInJson, pathtoJson, pathInJson);
+        connector().extractFromJson(pathInJson, pathtoJson, pathInJson);
         thenIs(pathInJson, value);
     }
 
     @Step({"Then <dataPath> is empty", "And <dataPath> is empty"})
     public void thenEmpty(String dataPath) {
-        connector.assertResponse(dataPath, empty());
+        connector().assertResponse(dataPath, empty());
     }
 
     @Step({"Then <dataPath> is not empty", "And <dataPath> is not empty"})
     public void thenNotEmpty(String dataPath) {
-        connector.assertResponse(dataPath, not(empty()));
+        connector().assertResponse(dataPath, not(empty()));
     }
 
     @Step({"Then <dataPath> is true", "And <dataPath> is true"})
     public void thenTrue(String dataPath) {
-        connector.assertResponse(dataPath, is(true));
+        connector().assertResponse(dataPath, is(true));
     }
 
     @Step({"Then the response is equal to <content>", "And the response is equal to <content>"})
     public void thenIsEqual(String content) {
-        connector.assertResponseAsJson(content);
+        connector().assertResponseAsJson(content);
     }
 
     @Step({"Then <dataPath> is false", "And <dataPath> is false"})
     public void thenFalse(String dataPath) {
-        connector.assertResponse(dataPath, is(false));
+        connector().assertResponse(dataPath, is(false));
     }
 
     private void compare(Object value, Consumer<Object[]> match) {

@@ -48,41 +48,41 @@ public final class Common extends Service<Connector> {
     @Step({"Then extracting <variable> from <parent>",
             "And extracting <variable> from <parent>"})
     public void extractPathWithParent(String variable, String parent) {
-        connector.extract(variable, parent, "");
+        connector().extract(variable, parent, "");
     }
 
     @Step({"Then extracting <variable>",
             "And extracting <variable>"})
     public void extractPath(String variable) {
-        connector.extract(variable, "", "");
+        connector().extract(variable, "", "");
     }
 
     @Step({"Then extracting <variable> from <parent> where <attribute>",
             "And extracting <variable> from <parent> where <attribute>"})
     public void extractPathWithParent(String variable, String parent, String attributeValue) {
-        connector.extract(variable, parent, attributeValue);
+        connector().extract(variable, parent, attributeValue);
     }
 
     @Step({"Then extracting <variable> where <attribute>",
             "And extracting <variable> where <attribute>"})
     public void extractPath(String variable, String attributeValue) {
-        connector.extract(variable, "", attributeValue);
+        connector().extract(variable, "", attributeValue);
     }
 
     @Step({"Then extracting <variable> as sum of <sum>",
             "And extracting <variable> as sum of <sum>"})
     public void extractAsSum(String variable, String sum) {
-        connector.extractSum(variable, sum);
+        connector().extractSum(variable, sum);
     }
 
     @Step({"Then extracting <pathInJson> as <variableToStore> from json <pathToJson>",
             "And extracting <pathInJson> as <variableToStore> from json <pathToJson>"})
     public void extractFromJson(String pathInJson, String variableToStore, String pathToJson) {
-        connector.extractFromJson(pathInJson, pathToJson, variableToStore);
+        connector().extractFromJson(pathInJson, pathToJson, variableToStore);
     }
 
     @Step({"When posting <query>", "And posting <query>"})
     public void posting(String query) {
-        connector.post(query, "", authenticationHandler);
+        connector().post(query, "", authenticationHandler);
     }
 }

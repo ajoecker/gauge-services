@@ -1,26 +1,23 @@
 package com.github.ajoecker.gauge.services.common;
 
-import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.Registry;
-import com.github.ajoecker.gauge.services.Sender;
-import com.github.ajoecker.gauge.services.VariableAccessor;
+import com.github.ajoecker.gauge.random.data.VariableStorage;
+import com.github.ajoecker.gauge.services.*;
 import com.thoughtworks.gauge.Table;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBody;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class VerificationTest {
     private Sender sender = new Sender(new VariableAccessor());
+
     @Test
     public void isWithString() {
         Consumer<Object[]> consumer = objects -> Assertions.assertArrayEquals(new String[]{"Pablo Picasso", "Banksy"}, objects);
@@ -130,5 +127,58 @@ public class VerificationTest {
         sender.setResponse(response);
         Registry.get().init("foo", sender1 -> connector);
         new Verification().thenIsEqual(s);
+    }
+
+    @Test
+    public void equalVariables() {
+        VariableStorage storage = new TestVariableStorage();
+        storage.put("foo", 2.34);
+        storage.put("bar", 2.34);
+        Connector connector = new Connector(storage, sender);
+        Registry.get().init("foo", sender1 -> connector);
+        new Verification().compareVariables("foo", "bar");
+    }
+
+    @Test
+    public void equalMultipleVariables() {
+        VariableStorage storage = new TestVariableStorage();
+        storage.put("foo", 2.34);
+        storage.put("bar", 2.34);
+        storage.put("blub", 2.34);
+        Connector connector = new Connector(storage, sender);
+        Registry.get().init("foo", sender1 -> connector);
+        new Verification().compareVariables("foo", "bar, blub  ");
+    }
+
+    @Test
+    public void equalWrongVariables() {
+        VariableStorage storage = new TestVariableStorage();
+        storage.put("foo", 2.34);
+        storage.put("bar", 2.35);
+        storage.put("blub", 2.34);
+        storage.put("brab", 3.34);
+        Connector connector = new Connector(storage, sender);
+        Registry.get().init("foo", sender1 -> connector);
+        try {
+            new Verification().compareVariables("foo", "bar, blub,brab  ");
+            fail("should have failed, as values are different");
+        } catch (AssertionError e) {
+            // thats what we want
+            org.assertj.core.api.Assertions.assertThat(e.getMessage()).contains("2.35", "3.34");
+        }
+    }
+
+    @Test
+    public void equalNonExistingVariables() {
+        VariableStorage storage = new TestVariableStorage();
+        storage.put("foo", 2.34);
+        Connector connector = new Connector(storage, sender);
+        Registry.get().init("foo", sender1 -> connector);
+        try {
+            new Verification().compareVariables("foo", "bar, blub,brab  ");
+            fail("should have failed, as values are not present");
+        } catch (AssertionError e) {
+            // thats what we want
+        }
     }
 }

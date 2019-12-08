@@ -13,10 +13,6 @@ import java.util.function.Function;
 public final class Registry {
     private static final Registry instance = new Registry();
 
-    public void setActiveType(String type) {
-        this.activeType = type;
-    }
-
     public enum LoginType {
         TOKEN, BASIC
     }
@@ -47,6 +43,11 @@ public final class Registry {
         this.activeType = type;
         this.sender = sender;
         connectors.put(type, connector);
+    }
+
+    public void setActiveType(String type) {
+        Logger.info("setting active type to {}", type);
+        this.activeType = type;
     }
 
     public Connector connector() {
