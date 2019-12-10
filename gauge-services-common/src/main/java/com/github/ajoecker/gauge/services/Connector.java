@@ -9,11 +9,14 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.tinylog.Logger;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.google.common.math.DoubleMath.isMathematicalInteger;
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -30,7 +33,7 @@ public class Connector {
     private final String prefix;
 
     public Connector(Sender sender) {
-        this(VariableStorage.create(), sender, "");
+        this(VariableStorage.get(), sender, "");
     }
 
     public Connector(VariableStorage variableStorage, Sender sender) {
@@ -38,7 +41,7 @@ public class Connector {
     }
 
     public Connector(Sender sender, String prefix) {
-        this(VariableStorage.create(), sender, prefix);
+        this(VariableStorage.get(), sender, prefix);
     }
 
     public Connector(VariableStorage variableStorage, Sender sender, String prefix) {
@@ -249,6 +252,25 @@ public class Connector {
     public void extractFromJson(String pathInJson, String pathToJson, String variableToStore) {
         Object value = JsonPath.from(sender.path(prefixfy(pathToJson)).toString()).get(pathInJson);
         Logger.info("extracted {} from json {} in path {}", value, pathToJson, pathInJson);
-        variableStorage.put(variableToStore, value);
+        saveValue(value, theValue -> variableStorage.put(variableToStore, theValue));
+    }
+
+    private void saveValue(Object value, Consumer<Object> saver) {
+        NumberFormat instance = NumberFormat.getInstance(Locale.getDefault());
+        try {
+            Number number = instance.parse(value.toString());
+            double doubleValue = number.doubleValue();
+            if (isMathematicalInteger(doubleValue)) {
+                Logger.info("saving {} as int", value);
+                saver.accept(number.intValue());
+            } else {
+                Logger.info("saving {} as double", value);
+                saver.accept(doubleValue);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            Logger.info("saving {} as object", value);
+            saver.accept(value);
+        }
     }
 }

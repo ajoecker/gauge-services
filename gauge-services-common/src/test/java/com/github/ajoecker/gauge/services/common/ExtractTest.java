@@ -66,10 +66,10 @@ public class ExtractTest {
         };
         Registry.get().init("foo", s -> new Connector(testVariableStorage, sender));
         new Common().extractFromJson("price.formatted", "token", "jsonPath");
-        assertExtractToken("32,56");
+        assertExtractToken(32.56);
     }
 
-    private void assertExtractToken(String expected) {
+    private void assertExtractToken(Object expected) {
         assertThat(testVariableStorage.get("token")).contains(expected);
     }
 
