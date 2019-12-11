@@ -26,6 +26,11 @@ public final class Verification extends Service<Connector> {
         compare(value, connector().thenContains(dataPath));
     }
 
+    @Step({"Then <path> start with <value>", "And <path> start with <value>"})
+    public void startWith(String dataPath, Object value) {
+        compare(value, connector().startWith(dataPath));
+    }
+
     @Step({"Then <path> is <value>", "And <path> is <value>",
             "Then <path> are <value>", "And <path> are <value>"})
     public void thenIs(String dataPath, Object value) {

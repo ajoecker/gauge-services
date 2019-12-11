@@ -5,8 +5,7 @@ import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.restassured.path.json.JsonPath;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
+import org.hamcrest.*;
 import org.tinylog.Logger;
 
 import java.text.NumberFormat;
@@ -113,6 +112,17 @@ public class Connector {
      */
     public void assertResponse(String path, Matcher<?> matcher) {
         sender.assertResponse(prefixfy(path), matcher);
+    }
+
+    public Consumer<Object[]> startWith(String dataPath) {
+        return actual -> {
+            if (sender.path(prefixfy(dataPath)) instanceof List) {
+                // assertResponse(dataPath, Matchers.hasItems(actual));
+                assertResponse(dataPath, new ListStartWith(actual));
+            } else {
+                assertResponse(dataPath, Matchers.containsString((String) actual[0]));
+            }
+        };
     }
 
     public Consumer<Object[]> thenContains(String dataPath) {
@@ -271,6 +281,45 @@ public class Connector {
             e.printStackTrace();
             Logger.info("saving {} as object", value);
             saver.accept(value);
+        }
+    }
+
+    private static class ListStartWith extends BaseMatcher<Object> {
+        private final Object[] actual;
+
+        public ListStartWith(Object[] actual) {
+            this.actual = actual;
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            // not sure
+        }
+
+        private boolean inList(Object toLook, List<String> o) {
+            return o.stream()
+                    .filter(o2 -> o2.startsWith(getValue(toLook)))
+                    .findAny()
+                    .isPresent();
+        }
+
+        private String getValue(Object toLook) {
+            if (toLook instanceof Map) {
+                // we only allow on column values here
+                return ((Map) toLook).values().iterator().next().toString();
+            }
+            return toLook.toString();
+        }
+
+        @Override
+        public boolean matches(Object o) {
+            Logger.info("try to match {} against {}", o, Arrays.toString(actual));
+            return stream(actual).allMatch(partial -> inList(partial, (List<String>) o));
+        }
+
+        @Override
+        public void describeMismatch(Object o, Description description) {
+            description.appendText("was not found").appendValue(o);
         }
     }
 }

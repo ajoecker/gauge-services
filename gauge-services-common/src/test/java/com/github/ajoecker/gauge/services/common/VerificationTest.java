@@ -5,6 +5,7 @@ import com.github.ajoecker.gauge.services.*;
 import com.thoughtworks.gauge.Table;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBody;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -51,22 +52,58 @@ public class VerificationTest {
 
     @Test
     public void verifyContainsWithString() {
-        String string = "Hans, Alicia";
-        Consumer<Object[]> consumer = objects -> {
-            assertAll(
-                    () -> assertEquals(2, objects.length),
-                    () -> assertEquals("Hans", objects[0]),
-                    () -> assertEquals("Alicia", objects[1])
-            );
-        };
-        Connector connector = new Connector(sender) {
+        List<String> expected = List.of("Hans", "Alicia");
+        Sender sender = new Sender(new VariableAccessor()) {
             @Override
-            public Consumer<Object[]> thenContains(String dataPath) {
-                return consumer;
+            public Object path(String path) {
+                return List.of();
+            }
+
+            @Override
+            public void assertResponse(String path, Matcher<?> matcher) {
+                assertTrue(matcher.matches(expected));
             }
         };
-        Registry.get().init("foo", sender1 -> connector);
-        new Verification().thenContains("path", string);
+        Registry.get().init("foo", sender1 -> new Connector(sender));
+        new Verification().thenContains("path", "Hans, Alicia");
+    }
+
+    @Test
+    public void verifyStartWith() {
+        List<String> expected = List.of("Hans Albers", "Alicia Irgendwas");
+        Sender sender = new Sender(new VariableAccessor()) {
+            @Override
+            public Object path(String path) {
+                return List.of();
+            }
+
+            @Override
+            public void assertResponse(String path, Matcher<?> matcher) {
+                assertTrue(matcher.matches(expected));
+            }
+        };
+        Registry.get().init("foo", sender1 -> new Connector(sender));
+        new Verification().startWith("path", "Hans, Alicia");
+    }
+    @Test
+    public void verifyStartWithWithTable() {
+        Table table = new Table(List.of("name"));
+        table.addRow(List.of("Hans Albers"));
+        table.addRow(List.of("Alicia Irgendwas"));
+        List<String> expected = List.of("Hans Albers", "Alicia Irgendwas");
+        Sender sender = new Sender(new VariableAccessor()) {
+            @Override
+            public Object path(String path) {
+                return List.of();
+            }
+
+            @Override
+            public void assertResponse(String path, Matcher<?> matcher) {
+                assertTrue(matcher.matches(expected));
+            }
+        };
+        Registry.get().init("foo", sender1 -> new Connector(sender));
+        new Verification().startWith("path", table);
     }
 
     @Test
