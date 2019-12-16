@@ -8,6 +8,7 @@ import io.restassured.path.json.JsonPath;
 import org.hamcrest.*;
 import org.tinylog.Logger;
 
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.*;
@@ -250,13 +251,16 @@ public class Connector {
     }
 
     public void extractSum(String variable, String variablesToSum) {
-        double sum = stream(variablesToSum.split(","))
+        stream(variablesToSum.split(","))
                 .map(String::trim)
                 .map(this::getVariableValue)
-                .mapToDouble(Double::parseDouble)
-                .sum();
-        Logger.info("saving {} as sum {}", variable, sum);
-        variableStorage.put(variable, sum);
+                .map(BigDecimal::new)
+                .reduce(BigDecimal::add)
+                .map(BigDecimal::doubleValue)
+                .ifPresent(aDouble -> {
+                    Logger.info("saving {} as sum {}", variable, aDouble);
+                    variableStorage.put(variable, aDouble);
+                });
     }
 
     public void extractFromJson(String pathInJson, String pathToJson, String variableToStore) {
@@ -265,18 +269,19 @@ public class Connector {
         saveValue(value, theValue -> variableStorage.put(variableToStore, theValue));
     }
 
+    public static void main(String[] args) {
+        double d = 634.0799999999999;
+        System.out.println(Math.floor(d));
+        System.out.println(Math.ceil(d));
+    }
+
     private void saveValue(Object value, Consumer<Object> saver) {
         NumberFormat instance = NumberFormat.getInstance(Locale.getDefault());
         try {
             Number number = instance.parse(value.toString());
             double doubleValue = number.doubleValue();
-            if (isMathematicalInteger(doubleValue)) {
-                Logger.info("saving {} as int", value);
-                saver.accept(number.intValue());
-            } else {
-                Logger.info("saving {} as double", value);
-                saver.accept(doubleValue);
-            }
+            Logger.info("saving {} as double", doubleValue);
+            saver.accept(doubleValue);
         } catch (ParseException e) {
             e.printStackTrace();
             Logger.info("saving {} as object", value);
