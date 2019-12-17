@@ -31,30 +31,31 @@ public final class Verification extends Service<Connector> {
         compare(value, connector().startWith(dataPath));
     }
 
-    @Step({"Then <path> is <value>", "And <path> is <value>",
-            "Then <path> are <value>", "And <path> are <value>"})
+    @Step({"Then <path> is <value>", "And <path> is <value>", "Then <path> are <value>", "And <path> are <value>"})
     public void thenIs(String dataPath, Object value) {
         connector().getFromVariableStorage(dataPath).
-                ifPresentOrElse(v -> assertThat(v.toString()).isEqualTo(value), () -> compare(value, connector().thenIs(dataPath)));
+                ifPresentOrElse(v -> assertThat(v.toString()).isEqualTo(value),
+                        () -> compare(value, connector().thenIs(dataPath)));
     }
 
     @Step({"Then <actual> is identical to <expected>", "And <actual> is identical to <expected>"})
     public void compareVariables(String actual, String allExpected) {
         Object actualValue = connector().getFromVariableStorage(actual).orElseThrow();
-        String[] expectedVariables = split(allExpected);
         List<String> errorMessages = new ArrayList<>();
 
-        Arrays.stream(expectedVariables).forEach(each -> connector().getFromVariableStorage(each.trim()).ifPresentOrElse(s -> {
+        stream(split(allExpected)).forEach(each -> connector().getFromVariableStorage(each.trim()).ifPresentOrElse(s -> {
             if (!s.equals(actualValue)) {
                 errorMessages.add(each + " (" + s + ") is not equal to " + actual + " (" + actualValue + ")");
+            }
+            else {
+                Logger.info("value '{}' ({}) is identical to '{}' ({})", actual, actualValue, each, s);
             }
         }, () -> errorMessages.add(each + " is not known")));
 
         assertThat(errorMessages).withFailMessage("\n" + errorMessages.stream().collect(Collectors.joining("\n"))).isEmpty();
     }
 
-    @Step({"Then <inJson> from json <toJson> is <value>",
-            "And <inJson> from json <toJson> is <value>"})
+    @Step({"Then <inJson> from json <toJson> is <value>", "And <inJson> from json <toJson> is <value>"})
     public void jsonExtractionEqual(String pathInJson, String pathtoJson, Object value) {
         connector().extractFromJson(pathInJson, pathtoJson, pathInJson);
         thenIs(pathInJson, value);

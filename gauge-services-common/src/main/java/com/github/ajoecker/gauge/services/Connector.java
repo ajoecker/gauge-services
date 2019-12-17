@@ -16,7 +16,6 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.google.common.math.DoubleMath.isMathematicalInteger;
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -28,9 +27,9 @@ import static org.hamcrest.Matchers.is;
 public class Connector {
     private static final Pattern compile = Pattern.compile("(%.+?%)");
     private static final String MASK = "%";
-    protected final Sender sender;
     private final VariableStorage variableStorage;
     private final String prefix;
+    protected final Sender sender;
 
     public Connector(Sender sender) {
         this(VariableStorage.get(), sender, "");
@@ -118,7 +117,6 @@ public class Connector {
     public Consumer<Object[]> startWith(String dataPath) {
         return actual -> {
             if (sender.path(prefixfy(dataPath)) instanceof List) {
-                // assertResponse(dataPath, Matchers.hasItems(actual));
                 assertResponse(dataPath, new ListStartWith(actual));
             } else {
                 assertResponse(dataPath, Matchers.containsString((String) actual[0]));
@@ -180,11 +178,24 @@ public class Connector {
         });
     }
 
-    private void storeVariableFromMap(String variable, Map<Object, Object> o) {
-        Map<Object, Object> asMap = o;
-        Object value = asMap.get(variable);
+    private void storeVariableFromMap(String variable, Map<Object, Object> map) {
+        Object value = getValue(variable, map);
         Logger.info("extraction successful for {} from {}", value, variable);
         variableStorage.put(variable, value);
+    }
+
+    private Object getValue(String variable, Map<Object, Object> map) {
+        String[] split = variable.split("\\.");
+        for(String level : split) {
+            Object o = map.get(level);
+            if (o instanceof Map) {
+                map = (Map<Object, Object>) o;
+            }
+            else {
+                return o;
+            }
+        }
+        throw new IllegalArgumentException("no value found for " + variable + " in " + map);
     }
 
     private List<String> splitIntoKeyValueList(String s) {
@@ -269,12 +280,6 @@ public class Connector {
         saveValue(value, theValue -> variableStorage.put(variableToStore, theValue));
     }
 
-    public static void main(String[] args) {
-        double d = 634.0799999999999;
-        System.out.println(Math.floor(d));
-        System.out.println(Math.ceil(d));
-    }
-
     private void saveValue(Object value, Consumer<Object> saver) {
         NumberFormat instance = NumberFormat.getInstance(Locale.getDefault());
         try {
@@ -283,7 +288,6 @@ public class Connector {
             Logger.info("saving {} as double", doubleValue);
             saver.accept(doubleValue);
         } catch (ParseException e) {
-            e.printStackTrace();
             Logger.info("saving {} as object", value);
             saver.accept(value);
         }
@@ -301,13 +305,6 @@ public class Connector {
             // not sure
         }
 
-        private boolean inList(Object toLook, List<String> o) {
-            return o.stream()
-                    .filter(o2 -> o2.startsWith(getValue(toLook)))
-                    .findAny()
-                    .isPresent();
-        }
-
         private String getValue(Object toLook) {
             if (toLook instanceof Map) {
                 // we only allow on column values here
@@ -319,7 +316,10 @@ public class Connector {
         @Override
         public boolean matches(Object o) {
             Logger.info("try to match {} against {}", o, Arrays.toString(actual));
-            return stream(actual).allMatch(partial -> inList(partial, (List<String>) o));
+            List<String> asList = ((List<String>) o);
+            return stream(actual).allMatch(partial ->
+                    asList.stream().anyMatch(o2 -> o2.startsWith(getValue(partial)))
+            );
         }
 
         @Override

@@ -1,7 +1,9 @@
 package com.github.ajoecker.gauge.services.common;
 
+import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.Connector;
 import com.thoughtworks.gauge.Step;
+import org.tinylog.Logger;
 
 /**
  * The class {@link Common} contains common step implementations for all different kinds, like checking the status code,
@@ -51,8 +53,7 @@ public final class Common extends Service<Connector> {
         connector().extract(variable, parent, "");
     }
 
-    @Step({"Then extracting <variable>",
-            "And extracting <variable>"})
+    @Step({"Then extracting <variable>", "And extracting <variable>"})
     public void extractPath(String variable) {
         connector().extract(variable, "", "");
     }
@@ -63,14 +64,12 @@ public final class Common extends Service<Connector> {
         connector().extract(variable, parent, attributeValue);
     }
 
-    @Step({"Then extracting <variable> where <attribute>",
-            "And extracting <variable> where <attribute>"})
+    @Step({"Then extracting <variable> where <attribute>", "And extracting <variable> where <attribute>"})
     public void extractPath(String variable, String attributeValue) {
         connector().extract(variable, "", attributeValue);
     }
 
-    @Step({"Then extracting <variable> as sum of <sum>",
-            "And extracting <variable> as sum of <sum>"})
+    @Step({"Then extracting <variable> as sum of <sum>", "And extracting <variable> as sum of <sum>"})
     public void extractAsSum(String variable, String sum) {
         connector().extractSum(variable, sum);
     }
@@ -83,6 +82,13 @@ public final class Common extends Service<Connector> {
 
     @Step({"When posting <query>", "And posting <query>"})
     public void posting(String query) {
+        connector().post(query, "", authenticationHandler);
+    }
+
+    @Step({"When posting from <variable>", "And posting from <variable>"})
+    public void postingFromVariable(String variable) {
+        Logger.info("posting query read from {}", variable);
+        String query = (String) VariableStorage.get().get(variable).orElseThrow();
         connector().post(query, "", authenticationHandler);
     }
 }
