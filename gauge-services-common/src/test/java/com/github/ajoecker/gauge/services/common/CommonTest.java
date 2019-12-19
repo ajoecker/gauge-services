@@ -6,6 +6,8 @@ import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CommonTest {
@@ -44,5 +46,71 @@ public class CommonTest {
         };
         Registry.get().init("foo", sender, connector, authenticationHandler);
         new Common().loginWithToken("funny-token");
+    }
+
+    @Test
+    public void sum() {
+        Sender sender = new Sender(new VariableAccessor());
+        TestVariableStorage variableStorage = new TestVariableStorage();
+        variableStorage.put("val1", 43.54f);
+        Connector connector = new Connector(variableStorage, sender) {
+            @Override
+            public Optional<Object> fromLatestResponse(String variablePath) {
+                if (variablePath.equals("val2")) {
+                    return Optional.of("32");
+                }
+                return super.fromLatestResponse(variablePath);
+            }
+        };
+        Registry.get().init("foo", sender1 -> connector);
+        new Common().extractAsSum("foobar", "val1, val2");
+        org.assertj.core.api.Assertions.assertThat(variableStorage.get("foobar")).contains(75.54);
+    }
+
+    @Test
+    public void sumAllNull() {
+        Sender sender = new Sender(new VariableAccessor());
+        TestVariableStorage variableStorage = new TestVariableStorage();
+        Connector connector = new Connector(variableStorage, sender) {
+            @Override
+            public Optional<Object> fromLatestResponse(String variablePath) {
+                return Optional.empty();
+            }
+        };
+        Registry.get().init("foo", sender1 -> connector);
+        new Common().extractAsSum("foobar", "val1, val2");
+        org.assertj.core.api.Assertions.assertThat(variableStorage.get("foobar")).contains(0.0);
+    }
+
+    @Test
+    public void sumPartiallyNull() {
+        Sender sender = new Sender(new VariableAccessor());
+        TestVariableStorage variableStorage = new TestVariableStorage();
+        variableStorage.put("val1", 43.54);
+        Connector connector = new Connector(variableStorage, sender) {
+            @Override
+            public Optional<Object> fromLatestResponse(String variablePath) {
+                return Optional.empty();
+            }
+        };
+        Registry.get().init("foo", sender1 -> connector);
+        new Common().extractAsSum("foobar", "val1, val2");
+        org.assertj.core.api.Assertions.assertThat(variableStorage.get("foobar")).contains(43.54);
+    }
+
+    @Test
+    public void sumWithEmptyString() {
+        Sender sender = new Sender(new VariableAccessor());
+        TestVariableStorage variableStorage = new TestVariableStorage();
+        variableStorage.put("val1", "");
+        Connector connector = new Connector(variableStorage, sender) {
+            @Override
+            public Optional<Object> fromLatestResponse(String variablePath) {
+                return Optional.empty();
+            }
+        };
+        Registry.get().init("foo", sender1 -> connector);
+        new Common().extractAsSum("foobar", "val1, val2");
+        org.assertj.core.api.Assertions.assertThat(variableStorage.get("foobar")).contains(0.0);
     }
 }

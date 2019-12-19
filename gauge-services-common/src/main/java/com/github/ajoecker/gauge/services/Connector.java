@@ -13,6 +13,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -186,12 +187,11 @@ public class Connector {
 
     private Object getValue(String variable, Map<Object, Object> map) {
         String[] split = variable.split("\\.");
-        for(String level : split) {
+        for (String level : split) {
             Object o = map.get(level);
             if (o instanceof Map) {
                 map = (Map<Object, Object>) o;
-            }
-            else {
+            } else {
                 return o;
             }
         }
@@ -234,20 +234,16 @@ public class Connector {
         java.util.regex.Matcher matcher = compile.matcher(v);
         String result = v;
         while (matcher.find()) {
-            String variableValue = getVariableValue(matcher.group(1).replace(MASK, "").trim());
+            Optional<Object> value = getVariableValue(matcher.group(1).replace(MASK, "").trim());
+            String variableValue = value.map(Object::toString).orElseThrow();
             String substring = v.substring(matcher.start(1), matcher.end(1));
             result = result.replace(substring, variableValue.replace("\"", "\\\""));
         }
         return result;
     }
 
-    private String getVariableValue(String variable) {
-        return getFromVariableStorage(variable).map(Object::toString)
-                .orElseGet(() ->
-                        fromLatestResponse(variable)
-                                .map(Object::toString)
-                                .filter(s -> s.length() > 0)
-                                .orElse(variable));
+    private Optional<Object> getVariableValue(String variable) {
+        return getFromVariableStorage(variable).or(() -> fromLatestResponse(variable));
     }
 
     public final Optional<Object> getFromVariableStorage(String toLookFor) {
@@ -262,16 +258,40 @@ public class Connector {
     }
 
     public void extractSum(String variable, String variablesToSum) {
-        stream(variablesToSum.split(","))
-                .map(String::trim)
-                .map(this::getVariableValue)
-                .map(BigDecimal::new)
-                .reduce(BigDecimal::add)
-                .map(BigDecimal::doubleValue)
-                .ifPresent(aDouble -> {
-                    Logger.info("saving {} as sum {}", variable, aDouble);
-                    variableStorage.put(variable, aDouble);
-                });
+        BigDecimal reduce = stream(variablesToSum.split(","))
+                .map(each -> getVariableValue(each.trim()).orElseGet(getDefault(each)))
+                .flatMap(o -> cast(o).stream())
+                .reduce(new BigDecimal(0), BigDecimal::add);
+        double value = reduce.doubleValue();
+        Logger.info("saving {} as sum {}", variable, value);
+        variableStorage.put(variable, value);
+    }
+
+    private Supplier<Object> getDefault(String each) {
+        return () -> {
+            Logger.warn("variable '{}' can not be found - 0 is used !", each);
+            return 0;
+        };
+    }
+
+    private Optional<BigDecimal> cast(Object retrievedValue) {
+        if (retrievedValue instanceof Double) {
+            return Optional.of(BigDecimal.valueOf((Double) retrievedValue));
+        } else if (retrievedValue instanceof Integer) {
+            return Optional.of(BigDecimal.valueOf((Integer) retrievedValue));
+        } else if (retrievedValue instanceof Float) {
+            return Optional.of(new BigDecimal(Float.toString((Float) retrievedValue)));
+        } else if (retrievedValue instanceof String) {
+            String val = (String) retrievedValue;
+            if (!val.isEmpty()) {
+                return Optional.of(new BigDecimal(val));
+            } else {
+                Logger.warn("retrieved value is empty string");
+                return Optional.empty();
+            }
+        }
+        Logger.warn("{} with class {} is not supported for sum", retrievedValue, retrievedValue.getClass());
+        return Optional.empty();
     }
 
     public void extractFromJson(String pathInJson, String pathToJson, String variableToStore) {
