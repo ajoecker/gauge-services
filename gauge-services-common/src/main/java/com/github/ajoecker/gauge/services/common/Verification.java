@@ -4,15 +4,13 @@ import com.github.ajoecker.gauge.services.Connector;
 import com.thoughtworks.gauge.*;
 import org.tinylog.Logger;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.hamcrest.Matchers.*;
 
 public final class Verification extends Service<Connector> {
@@ -47,8 +45,7 @@ public final class Verification extends Service<Connector> {
         stream(split(allExpected)).forEach(each -> connector().getFromVariableStorage(each.trim()).ifPresentOrElse(s -> {
             if (!s.equals(actualValue)) {
                 errorMessages.add(each + " (" + s + ") is not equal to " + actual + " (" + actualValue + ")");
-            }
-            else {
+            } else {
                 Logger.info("value '{}' ({}) is identical to '{}' ({})", actual, actualValue, each, s);
             }
         }, () -> errorMessages.add(each + " is not known")));
@@ -59,8 +56,24 @@ public final class Verification extends Service<Connector> {
     @ContinueOnFailure
     @Step({"Then <inJson> from json <toJson> is <value>", "And <inJson> from json <toJson> is <value>"})
     public void jsonExtractionEqual(String pathInJson, String pathtoJson, Object value) {
-        connector().extractFromJson(pathInJson, pathtoJson, pathInJson);
-        thenIs(pathInJson, value);
+        Object extracted = connector().extractFromJson(pathInJson, pathtoJson, "");
+        assertThat(value).isEqualTo(extracted);
+    }
+
+    @ContinueOnFailure
+    @Step({"Then <inJson> from json <toJson> contains <value>", "And <inJson> from json <toJson> contains <value>"})
+    public void jsonExtractionContains(String pathInJson, String pathtoJson, Object value) {
+        Object extracted = connector().extractFromJson(pathInJson, pathtoJson, "");
+        if (extracted instanceof List) {
+            Optional first = ((List) extracted).stream().filter(listValue -> isMatch(value, listValue)).findFirst();
+            assertThat(first).isNotEmpty();
+        } else {
+            assertThat((String) extracted).contains(value.toString());
+        }
+    }
+
+    private boolean isMatch(Object value, Object listValue) {
+        return listValue != null && listValue.equals(value) || listValue.toString().equals(value);
     }
 
     @ContinueOnFailure

@@ -4,6 +4,7 @@ import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.thoughtworks.gauge.Table;
 import io.restassured.path.json.JsonPath;
 import org.hamcrest.*;
 import org.tinylog.Logger;
@@ -13,6 +14,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -74,9 +76,17 @@ public class Connector {
      * @param authenticationHandler the {@link AuthenticationHandler} to ensure authentication
      */
     public final void post(String query, String path, AuthenticationHandler authenticationHandler) {
+        post(query, path, authenticationHandler, Function.identity());
+    }
+
+    public void post(String query, String path, Table table, AuthenticationHandler authenticationHandler) {
+        post(query, path, authenticationHandler, v -> replaceVariablesFromTable(v, table));
+    }
+
+    private void post(String query, String path, AuthenticationHandler authenticationHandler, Function<String, String> queryMaker) {
         String postEndpoint = sender.getCompleteEndpoint(replaceVariables(path));
         Logger.info("posting to " + postEndpoint);
-        Object object = bodyFor(replaceVariables(query));
+        Object object = bodyFor(replaceVariables(queryMaker.apply(query)));
         sender.setResponse(sender.sendPost(authenticationHandler, postEndpoint, object));
         Logger.info("posting done");
     }
@@ -156,33 +166,33 @@ public class Connector {
      * @param attributeValue the list of key=values that must match the entry in which the variable can be found.
      *                       This can be null, then the first (or if not a list, the only one) is taken.
      */
-    public final void extract(String variable, String parent, String attributeValue) {
+    public final void extract(String variable, String parent, String attributeValue, String saver) {
         Logger.info("extracting variable {} where {} is", variable, attributeValue);
         List<String> keyValueList = splitIntoKeyValueList(attributeValue);
         Optional<Object> optionalParent = fromLatestResponse(parent);
 
         if (keyValueList.isEmpty()) {
-            optionalParent.ifPresent(o -> storeVariableFromMap(variable, (Map<Object, Object>) o));
+            optionalParent.ifPresent(o -> storeVariableFromMap(variable, (Map<Object, Object>) o, saver));
         } else {
-            optionalParent.filter(List.class::isInstance).ifPresent(enclosing -> storeMatchInMap(variable, keyValueList, enclosing));
+            optionalParent.filter(List.class::isInstance).ifPresent(enclosing -> storeMatchInMap(variable, keyValueList, enclosing, saver));
         }
     }
 
-    private void storeMatchInMap(String variable, List<String> keyValueList, Object enclosing) {
+    private void storeMatchInMap(String variable, List<String> keyValueList, Object enclosing, String saver) {
         Logger.info("extracting from found value {}", enclosing);
         List<Map<Object, Object>> theList = (List<Map<Object, Object>>) enclosing;
         Optional<Map<Object, Object>> match = theList.stream().filter(map -> matches(map, keyValueList)).findFirst();
         match.ifPresent(keyValue -> {
             Object value = keyValue.get(variable);
             Logger.info("extraction successful for {}", value);
-            variableStorage.put(variable, value);
+            variableStorage.put(saver, value);
         });
     }
 
-    private void storeVariableFromMap(String variable, Map<Object, Object> map) {
+    private void storeVariableFromMap(String variable, Map<Object, Object> map, String saver) {
         Object value = getValue(variable, map);
         Logger.info("extraction successful for {} from {}", value, variable);
-        variableStorage.put(variable, value);
+        variableStorage.put(saver, value);
     }
 
     private Object getValue(String variable, Map<Object, Object> map) {
@@ -231,15 +241,85 @@ public class Connector {
      * @return a replaced string with no variables
      */
     protected final String replaceVariables(String v) {
+        return replaceVariables(v, this::getVariableValue);
+    }
+
+    private final String replaceVariables(String v, Function<String, Optional<Object>> retriever) {
         java.util.regex.Matcher matcher = compile.matcher(v);
         String result = v;
         while (matcher.find()) {
-            Optional<Object> value = getVariableValue(matcher.group(1).replace(MASK, "").trim());
+            Optional<Object> value = retriever.apply(matcher.group(1).replace(MASK, "").trim());
             String variableValue = value.map(Object::toString).orElseThrow();
             String substring = v.substring(matcher.start(1), matcher.end(1));
             result = result.replace(substring, variableValue.replace("\"", "\\\""));
         }
         return result;
+    }
+
+    public static void main(String[] args) {
+        String s = "{\n" +
+                "  \"data\": {\n" +
+                "    \"contract\": {\n" +
+                "      \"id\": 44950,\n" +
+                "      \"annualPrice\": \"423,72 EUR\",\n" +
+                "      \"inResignationPeriod\": false,\n" +
+                "      \"monthlyRate\": \"35,31\",\n" +
+                "      \"status\": \"policed\",\n" +
+                "      \"insuranceConfirmationNumbers\": [\n" +
+                "        {\n" +
+                "          \"daysLeft\": 11,\n" +
+                "          \"id\": \"4441\",\n" +
+                "          \"number\": \"NXFSWZS\"\n" +
+                "        }\n" +
+                "      ],\n" +
+                "      \"startOfInsurance\": \"2020-01-01\",\n" +
+                "      \"premium\": \"423,72\",\n" +
+                "      \"price\": \"423,72 EUR\",\n" +
+                "      \"mutations\": {\n" +
+                "        \"items\": [\n" +
+                "          {\n" +
+                "            \"validAt\": \"2020-01-01\",\n" +
+                "            \"id\": 16507,\n" +
+                "            \"mutableChanges\": \"{\\\"attributes\\\":{\\\"product_datum_attributes\\\":{\\\"max_km_per_year\\\":20000}}}\"\n" +
+                "          },\n" +
+                "          {\n" +
+                "            \"validAt\": \"2020-01-01\",\n" +
+                "            \"id\": 16510,\n" +
+                "            \"mutableChanges\": \"{\\\"attributes\\\":{\\\"product_datum_attributes\\\":{\\\"max_km_per_year\\\":15000}}}\"\n" +
+                "          },\n" +
+                "          {\n" +
+                "            \"validAt\": \"2020-01-01\",\n" +
+                "            \"id\": 16513,\n" +
+                "            \"mutableChanges\": \"{\\\"attributes\\\":{\\\"product_datum_attributes\\\":{\\\"max_km_per_year\\\":20000}}}\"\n" +
+                "          },\n" +
+                "          {\n" +
+                "            \"validAt\": \"2020-01-01\",\n" +
+                "            \"id\": 16516,\n" +
+                "            \"mutableChanges\": \"{\\\"attributes\\\":{\\\"product_datum_attributes\\\":{\\\"max_km_per_year\\\":15000}}}\"\n" +
+                "          }\n" +
+                "        ]\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+
+        JsonPath from = JsonPath.from(s);
+        Object o = from.get("data.contract.mutations.items.find{ it.id == 16516 }.mutableChanges");
+        System.out.println(o);
+    }
+
+    private String replaceVariablesFromTable(String query, Table table) {
+        return replaceVariables(query, v -> foor(table, v).or(() -> getVariableValue(v)));
+    }
+
+    private Optional<Object> foor(Table table, String variable) {
+        return table.getTableRows().stream().
+                filter(tableRow -> {
+                    String variable1 = tableRow.getCell("variable");
+                    Logger.info("{} == {} : {}", variable, variable1, variable.equals(variable1));
+                    return variable1.equals(variable);
+                }).
+                findFirst().map(tableRow -> tableRow.getCell("value"));
     }
 
     private Optional<Object> getVariableValue(String variable) {
@@ -294,10 +374,13 @@ public class Connector {
         return Optional.empty();
     }
 
-    public void extractFromJson(String pathInJson, String pathToJson, String variableToStore) {
+    public Object extractFromJson(String pathInJson, String pathToJson, String variableToStore) {
         Object value = JsonPath.from(sender.path(prefixfy(pathToJson)).toString()).get(pathInJson);
         Logger.info("extracted {} from json {} in path {}", value, pathToJson, pathInJson);
-        saveValue(value, theValue -> variableStorage.put(variableToStore, theValue));
+        if (!variableToStore.equals("")) {
+            saveValue(value, theValue -> variableStorage.put(variableToStore, theValue));
+        }
+        return value;
     }
 
     private void saveValue(Object value, Consumer<Object> saver) {

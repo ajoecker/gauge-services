@@ -3,6 +3,7 @@ package com.github.ajoecker.gauge.services.common;
 import com.github.ajoecker.gauge.random.data.VariableStorage;
 import com.github.ajoecker.gauge.services.Connector;
 import com.thoughtworks.gauge.Step;
+import com.thoughtworks.gauge.Table;
 import org.tinylog.Logger;
 
 /**
@@ -50,23 +51,29 @@ public final class Common extends Service<Connector> {
     @Step({"Then extracting <variable> from <parent>",
             "And extracting <variable> from <parent>"})
     public void extractPathWithParent(String variable, String parent) {
-        connector().extract(variable, parent, "");
+        connector().extract(variable, parent, "", variable);
+    }
+
+    @Step({"Then extracting <variable> from <parent> as <store>",
+            "And extracting <variable> from <parent> as <store>"})
+    public void extractPathWithParentInto(String variable, String parent, String saver) {
+        connector().extract(variable, parent, "", saver);
     }
 
     @Step({"Then extracting <variable>", "And extracting <variable>"})
     public void extractPath(String variable) {
-        connector().extract(variable, "", "");
+        connector().extract(variable, "", "", variable);
     }
 
     @Step({"Then extracting <variable> from <parent> where <attribute>",
             "And extracting <variable> from <parent> where <attribute>"})
     public void extractPathWithParent(String variable, String parent, String attributeValue) {
-        connector().extract(variable, parent, attributeValue);
+        connector().extract(variable, parent, attributeValue, variable);
     }
 
     @Step({"Then extracting <variable> where <attribute>", "And extracting <variable> where <attribute>"})
     public void extractPath(String variable, String attributeValue) {
-        connector().extract(variable, "", attributeValue);
+        connector().extract(variable, "", attributeValue, variable);
     }
 
     @Step({"Then extracting <variable> as sum of <sum>", "And extracting <variable> as sum of <sum>"})
@@ -83,6 +90,11 @@ public final class Common extends Service<Connector> {
     @Step({"When posting <query>", "And posting <query>"})
     public void posting(String query) {
         connector().post(query, "", authenticationHandler);
+    }
+
+    @Step({"When posting <query> with <table>", "And posting <query> with <table>"})
+    public void postingWithParameters(String query, Table table) {
+        connector().post(query, "", table, authenticationHandler);
     }
 
     @Step({"When posting from <variable>", "And posting from <variable>"})
