@@ -1,23 +1,31 @@
-package com.github.ajoecker.gauge.services.common;
+package com.github.ajoecker.gauge.services;
 
-import com.github.ajoecker.gauge.services.VariableAccessor;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import org.hamcrest.Matcher;
+import org.tinylog.Logger;
 
 import java.util.function.Function;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
 public class Sender {
     private VariableAccessor variableAccessor;
     private String endpoint;
+    private Response response;
 
     public Sender(VariableAccessor variableAccessor) {
         this.variableAccessor = variableAccessor;
         this.endpoint = variableAccessor.endpoint();
+    }
+
+    public final void setResponse(Response response) {
+        this.response = response;
     }
 
     protected RequestSpecification login(AuthenticationHandler authenticationHandler) {
@@ -95,5 +103,26 @@ public class Sender {
 
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
+        Logger.info("endpoint set to {}", endpoint);
+    }
+
+    public Object path(String path) {
+        return response.then().extract().path(path);
+    }
+
+    public void assertResponse(String path, Matcher<?> matcher) {
+        response.then().assertThat().body(path, matcher);
+    }
+
+    public String responseAsJson() {
+        return response.body().asString();
+    }
+
+    public void verifyStatusCode(int expected) {
+        response.then().statusCode(is(expected));
+    }
+
+    public void verifyRequestInLessThan(long timeout) {
+        response.then().time(lessThanOrEqualTo(timeout));
     }
 }

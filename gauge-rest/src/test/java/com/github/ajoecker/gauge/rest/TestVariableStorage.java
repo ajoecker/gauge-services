@@ -18,4 +18,9 @@ public class TestVariableStorage implements VariableStorage {
     public Optional<Object> get(String key) {
         return Optional.ofNullable(storage.get(key));
     }
+
+    @Override
+    public void print() {
+        System.out.println(storage);
+    }
 }

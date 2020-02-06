@@ -2,7 +2,7 @@ package com.github.ajoecker.gauge.rest;
 
 import com.github.ajoecker.gauge.services.Registry;
 import com.github.ajoecker.gauge.services.VariableAccessor;
-import com.github.ajoecker.gauge.services.common.Sender;
+import com.github.ajoecker.gauge.services.Sender;
 import com.github.ajoecker.gauge.services.login.AuthenticationHandler;
 import io.restassured.response.Response;
 import org.assertj.core.api.Assertions;
@@ -11,7 +11,7 @@ import org.mockito.Mockito;
 
 import java.util.Optional;
 
-public class DeleteTest {
+public class RestTest {
     VariableAccessor variableAccessor = new VariableAccessor() {
         @Override
         public String endpoint() {
@@ -28,9 +28,8 @@ public class DeleteTest {
                 return Mockito.mock(Response.class);
             }
         };
-        RestConnector connector = new RestConnector(new TestVariableStorage(), sender);
-        Registry.init(connector);
-        Delete delete = new Delete();
+        Registry.get().init("foo", sender1 -> new RestConnector(new TestVariableStorage(), sender));
+        Rest delete = new Rest();
         delete.delete("4", "de/customers");
     }
 
@@ -45,9 +44,8 @@ public class DeleteTest {
         };
         TestVariableStorage variableStorage = new TestVariableStorage();
         variableStorage.put("foo", 4);
-        RestConnector connector = new RestConnector(variableStorage, sender);
-        Registry.init(connector);
-        Delete delete = new Delete();
+        Registry.get().init("bar", sender1 -> new RestConnector(variableStorage, sender));
+        Rest delete = new Rest();
         delete.delete("%foo%", "de/customers");
     }
 
@@ -61,14 +59,13 @@ public class DeleteTest {
             }
         };
         TestVariableStorage variableStorage = new TestVariableStorage();
-        RestConnector connector = new RestConnector(variableStorage, sender) {
+        Registry.get().init("bar", sender1 -> new RestConnector(variableStorage, sender) {
             @Override
             public Optional<Object> fromLatestResponse(String variablePath) {
                 return variablePath.equals("customers") ? Optional.of("cua") : Optional.empty();
             }
-        };
-        Registry.init(connector);
-        Delete delete = new Delete();
+        });
+        Rest delete = new Rest();
         delete.delete("4", "de/%customers%");
     }
 }

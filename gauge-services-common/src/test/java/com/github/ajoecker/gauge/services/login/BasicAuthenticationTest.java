@@ -3,7 +3,7 @@ package com.github.ajoecker.gauge.services.login;
 import com.github.ajoecker.gauge.services.Connector;
 import com.github.ajoecker.gauge.services.TestVariableStorage;
 import com.github.ajoecker.gauge.services.VariableAccessor;
-import com.github.ajoecker.gauge.services.common.Sender;
+import com.github.ajoecker.gauge.services.Sender;
 import io.restassured.specification.AuthenticationSpecification;
 import io.restassured.specification.PreemptiveAuthSpec;
 import io.restassured.specification.RequestSpecification;

@@ -1,29 +1,34 @@
 package com.github.ajoecker.gauge.services.common;
 
-import com.github.ajoecker.gauge.services.Connector;
-import com.github.ajoecker.gauge.services.Registry;
+import com.github.ajoecker.gauge.random.data.VariableStorage;
+import com.github.ajoecker.gauge.services.*;
 import com.thoughtworks.gauge.Table;
+import io.restassured.response.Response;
+import io.restassured.response.ResponseBody;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class VerificationTest {
+    private Sender sender = new Sender(new VariableAccessor());
+
     @Test
     public void isWithString() {
         Consumer<Object[]> consumer = objects -> Assertions.assertArrayEquals(new String[]{"Pablo Picasso", "Banksy"}, objects);
-        Connector connector = new Connector() {
+        Connector connector = new Connector(sender) {
             @Override
             public Consumer<Object[]> thenIs(String dataPath) {
                 return consumer;
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender1 -> connector);
         Verification verification = new Verification();
         verification.thenIs("foo", "Pablo Picasso, Banksy");
     }
@@ -32,13 +37,13 @@ public class VerificationTest {
     public void isWithTable() {
         Map<String, String> m = Map.of("name", "foo", "value", "fooValue");
         Consumer<Object[]> consumer = objects -> Assertions.assertArrayEquals(new Map[]{m}, objects);
-        Connector connector = new Connector() {
+        Connector connector = new Connector(sender) {
             @Override
             public Consumer<Object[]> thenIs(String dataPath) {
                 return consumer;
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender1 -> connector);
         Verification verification = new Verification();
         Table table = new Table(List.of("name", "value"));
         table.addRow(List.of("foo", "fooValue"));
@@ -47,22 +52,58 @@ public class VerificationTest {
 
     @Test
     public void verifyContainsWithString() {
-        String string = "Hans, Alicia";
-        Consumer<Object[]> consumer = objects -> {
-            assertAll(
-                    () -> assertEquals(2, objects.length),
-                    () -> assertEquals("Hans", objects[0]),
-                    () -> assertEquals("Alicia", objects[1])
-            );
-        };
-        Connector connector = new Connector() {
+        List<String> expected = List.of("Hans", "Alicia");
+        Sender sender = new Sender(new VariableAccessor()) {
             @Override
-            public Consumer<Object[]> thenContains(String dataPath) {
-                return consumer;
+            public Object path(String path) {
+                return List.of();
+            }
+
+            @Override
+            public void assertResponse(String path, Matcher<?> matcher) {
+                assertTrue(matcher.matches(expected));
             }
         };
-        Registry.init(connector);
-        new Verification().thenContains("path", string);
+        Registry.get().init("foo", sender1 -> new Connector(sender));
+        new Verification().thenContains("path", "Hans, Alicia");
+    }
+
+    @Test
+    public void verifyStartWith() {
+        List<String> expected = List.of("Hans Albers", "Alicia Irgendwas");
+        Sender sender = new Sender(new VariableAccessor()) {
+            @Override
+            public Object path(String path) {
+                return List.of();
+            }
+
+            @Override
+            public void assertResponse(String path, Matcher<?> matcher) {
+                assertTrue(matcher.matches(expected));
+            }
+        };
+        Registry.get().init("foo", sender1 -> new Connector(sender));
+        new Verification().startWith("path", "Hans, Alicia");
+    }
+    @Test
+    public void verifyStartWithWithTable() {
+        Table table = new Table(List.of("name"));
+        table.addRow(List.of("Hans Albers"));
+        table.addRow(List.of("Alicia Irgendwas"));
+        List<String> expected = List.of("Hans Albers", "Alicia Irgendwas");
+        Sender sender = new Sender(new VariableAccessor()) {
+            @Override
+            public Object path(String path) {
+                return List.of();
+            }
+
+            @Override
+            public void assertResponse(String path, Matcher<?> matcher) {
+                assertTrue(matcher.matches(expected));
+            }
+        };
+        Registry.get().init("foo", sender1 -> new Connector(sender));
+        new Verification().startWith("path", table);
     }
 
     @Test
@@ -78,13 +119,13 @@ public class VerificationTest {
                     () -> assertEquals(objects[1], Map.of("nationality", "Spain", "name", "Alicia"))
             );
         };
-        Connector connector = new Connector() {
+        Connector connector = new Connector(sender) {
             @Override
             public Consumer<Object[]> thenContains(String dataPath) {
                 return consumer;
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender1 -> connector);
         new Verification().thenContains("path", table);
     }
 
@@ -98,13 +139,83 @@ public class VerificationTest {
                     () -> assertEquals(objects[1], Map.of("nationality", "Spain", "name", "Alicia"))
             );
         };
-        Connector connector = new Connector() {
+        Connector connector = new Connector(sender) {
             @Override
             public Consumer<Object[]> thenContains(String dataPath) {
                 return consumer;
             }
         };
-        Registry.init(connector);
+        Registry.get().init("foo", sender1 -> connector);
         new Verification().thenContains("path", map);
+    }
+
+    @Test
+    public void verifiesJson() {
+        String s = "{" +
+                "   \"id\": 34," +
+                "   \"name\": \"foobar\"" +
+                "}";
+
+        Response response = Mockito.mock(Response.class);
+        ResponseBody responseBody = Mockito.mock(ResponseBody.class);
+        Mockito.when(response.body()).thenReturn(responseBody);
+        Mockito.when(responseBody.asString()).thenReturn(s);
+        Connector connector = new Connector(sender);
+        sender.setResponse(response);
+        Registry.get().init("foo", sender1 -> connector);
+        new Verification().thenIsEqual(s);
+    }
+
+    @Test
+    public void equalVariables() {
+        VariableStorage storage = new TestVariableStorage();
+        storage.put("foo", 2.34);
+        storage.put("bar", 2.34);
+        Connector connector = new Connector(storage, sender);
+        Registry.get().init("foo", sender1 -> connector);
+        new Verification().compareVariables("foo", "bar");
+    }
+
+    @Test
+    public void equalMultipleVariables() {
+        VariableStorage storage = new TestVariableStorage();
+        storage.put("foo", 2.34);
+        storage.put("bar", 2.34);
+        storage.put("blub", 2.34);
+        Connector connector = new Connector(storage, sender);
+        Registry.get().init("foo", sender1 -> connector);
+        new Verification().compareVariables("foo", "bar, blub  ");
+    }
+
+    @Test
+    public void equalWrongVariables() {
+        VariableStorage storage = new TestVariableStorage();
+        storage.put("foo", 2.34);
+        storage.put("bar", 2.35);
+        storage.put("blub", 2.34);
+        storage.put("brab", 3.34);
+        Connector connector = new Connector(storage, sender);
+        Registry.get().init("foo", sender1 -> connector);
+        try {
+            new Verification().compareVariables("foo", "bar, blub,brab  ");
+            fail("should have failed, as values are different");
+        } catch (AssertionError e) {
+            // thats what we want
+            org.assertj.core.api.Assertions.assertThat(e.getMessage()).contains("2.35", "3.34");
+        }
+    }
+
+    @Test
+    public void equalNonExistingVariables() {
+        VariableStorage storage = new TestVariableStorage();
+        storage.put("foo", 2.34);
+        Connector connector = new Connector(storage, sender);
+        Registry.get().init("foo", sender1 -> connector);
+        try {
+            new Verification().compareVariables("foo", "bar, blub,brab  ");
+            fail("should have failed, as values are not present");
+        } catch (AssertionError e) {
+            // thats what we want
+        }
     }
 }
