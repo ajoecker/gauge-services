@@ -97,6 +97,11 @@ public final class Common extends Service<Connector> {
         connector().post(query, "", table, authenticationHandler);
     }
 
+    @Step({"When posting <query> to <path> with <table>", "And posting <query> to <path> with <table>"})
+    public void postingWithParameters(String query, String path, Table table) {
+        connector().post(query,  path, table, authenticationHandler);
+    }
+
     @Step({"When posting from <variable>", "And posting from <variable>"})
     public void postingFromVariable(String variable) {
         Logger.info("posting query read from {}", variable);
