@@ -34,15 +34,23 @@ public class Rest extends Service<RestConnector> {
 
     // transforms the gauge table in a set of parameters like var1=val1&var2=val2
     private void getForGaugeTable(String query, Table table) {
-        String getParameters = table.getTableRows().stream()
-                .map(tableRow -> tableRow.getCell("name") + "=" + tableRow.getCell("value"))
-                .collect(Collectors.joining("&"));
-        connector().get(query, getParameters, authenticationHandler);
+        connector().get(query, toParameter(table), authenticationHandler);
+    }
+
+    private String toParameter(Table table) {
+        return table.getTableRows().stream()
+                    .map(tableRow -> tableRow.getCell("name") + "=" + tableRow.getCell("value"))
+                    .collect(Collectors.joining("&"));
     }
 
     @Step({"When putting <query>", "And putting <query>"})
     public void putting(String query) {
         connector().put(query, "", authenticationHandler);
+    }
+
+    @Step({"When putting <query> to <path> with <table>", "And putting <query> to <path> with <table>"})
+    public void putting(String query, String path, Table table) {
+        connector().put(query, path, table, authenticationHandler);
     }
 
     @Step({"When putting <query> to <path>", "And putting <query> to <path>"})

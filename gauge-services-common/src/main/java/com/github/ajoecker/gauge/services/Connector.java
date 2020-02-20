@@ -83,6 +83,18 @@ public class Connector {
         post(query, path, authenticationHandler, v -> replaceVariablesFromTable(v, table));
     }
 
+    public void put(String query, String path, Table table, AuthenticationHandler authenticationHandler) {
+        put(query, path, authenticationHandler, v -> replaceVariablesFromTable(v, table));
+    }
+
+    private void put(String query, String path, AuthenticationHandler authenticationHandler, Function<String, String> queryMaker) {
+        String postEndpoint = sender.getCompleteEndpoint(replaceVariables(path));
+        Logger.info("posting to " + postEndpoint);
+        Object object = bodyFor(replaceVariables(queryMaker.apply(query)));
+        sender.setResponse(sender.sendPut(authenticationHandler, postEndpoint, object));
+        Logger.info("posting done");
+    }
+
     private void post(String query, String path, AuthenticationHandler authenticationHandler, Function<String, String> queryMaker) {
         String postEndpoint = sender.getCompleteEndpoint(replaceVariables(path));
         Logger.info("posting to " + postEndpoint);
